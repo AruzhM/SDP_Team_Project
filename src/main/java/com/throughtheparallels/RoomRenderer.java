@@ -3,17 +3,21 @@ package com.throughtheparallels;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import java.util.Objects;
 
 public class RoomRenderer {
 
-    //private static final int TILE = 16;
-    private static final int WIDTH = 160;
+    private static final int WIDTH = 176;
     private static final int HEIGHT = 120;
     private static final int SCALE = 3;
+
+    private static final int crystalX = 0;
+    private static final int crystalY = 48;
 
     private final Canvas canvas;
     private final GraphicsContext gc;
     private final Image tileset;
+    private final Image crystal;
 
     private final Player player = new Player();
 
@@ -50,6 +54,15 @@ public class RoomRenderer {
                     tileset.getException()
             );
         }
+
+        crystal = new Image(
+                Objects.requireNonNull(
+                        getClass().getResource(
+                                "/assets/objects/crystal_object.png"
+                        ),
+                        "Missing crystal image"
+                ).toExternalForm()
+        );
 
     }
 
@@ -101,6 +114,27 @@ public class RoomRenderer {
         drawSprite(0, 16, 16, 16, 120, 32);
         drawSprite(16, 16, 16, 16, 120, 16);
 
+        //bedroom window
+        drawSprite(32, 64, 16, 16, 48, 16);
+
+        //bedside table
+        drawSprite(48, 64, 16, 16, 0, 48);
+
+        //drawer
+        drawSprite(0, 64, 32, 32, 136, 32);
+
+        //pillow
+        drawSprite(32, 80, 16, 16, 64, 64);
+
+        //little rug
+        drawSprite(48, 80, 16, 16, 120, 48);
+
+        // Crystal on top of the desk
+        if (crystalVisible) {
+            gc.drawImage(crystal, crystalX, crystalY, 16, 16);
+        }
+
+
 
         player.render(gc);
 
@@ -113,21 +147,55 @@ public class RoomRenderer {
     }
 
 
-    public void movePlayer(double dx, double dy) {
 
-        double newX = player.getX() + dx;
-        double newY = player.getY() + dy;
+    public void update(
+            double deltaTime,
+            double dx,
+            double dy
+    ) {
+        player.update(
+                deltaTime,
+                dx,
+                dy,
+                WIDTH,
+                HEIGHT
+        );
 
-        // Keep the character inside the room
-        if (newX < 0 || newX > WIDTH - 16) {
-            return;
-        }
+        render();
+    }
 
-        if (newY < 32 || newY > HEIGHT - 32) {
-            return;
-        }
+    public void setCharacter(CharacterProfile profile) {
+        player.applyProfile(profile);
+        render();
+    }
 
-        player.move(dx, dy);
+    public boolean isPlayerNearCrystal() {
+        double playerX = player.getX();
+        double playerY = player.getY();
+
+        double dx = Math.abs(playerX - crystalX);
+        double dy = Math.abs(playerY - crystalY);
+
+        return dx < 20 && dy < 20;
+    }
+
+    public boolean isPlayerNearDoor() {
+        double playerX = player.getX();
+        double playerY = player.getY();
+
+        double doorX = 120;
+        double doorY = 32;
+
+        double dx = Math.abs(playerX - doorX);
+        double dy = Math.abs(playerY - doorY);
+
+        return dx < 20 && dy < 20;
+    }
+
+    private boolean crystalVisible = true;
+
+    public void hideCrystal() {
+        crystalVisible = false;
         render();
     }
 
