@@ -108,5 +108,23 @@ public class GameFacade {
         return false;
     }
 
+    public boolean activateCrystal() {
+
+        if (!gameStarted) {
+            return false;
+        }
+
+        boolean activated = room.startCrystalTransition();
+
+        if (activated) {
+            System.out.println(
+                    "Crystal activated! The room seems to change..."
+            );
+        }
+
+        return activated;
+    }
+
+
 
 }

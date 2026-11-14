@@ -24,6 +24,10 @@ public class Player {
     private double animationTimer = 0;
     private boolean moving = false;
 
+    private boolean specialAnimation = false;
+    private int specialFrame = 0;
+
+
     // Head shifts down on walking frames 1 and 3
     private static final int[] HAIR_OFFSETS = {
             0, 1, 0, 1
@@ -146,8 +150,12 @@ public class Player {
             double drawX,
             double drawY
     ) {
-        int sourceX = frame * FRAME_WIDTH;
-        int sourceY = direction * FRAME_HEIGHT;
+        int sourceX = (specialAnimation ? specialFrame : frame)
+                * FRAME_WIDTH;
+
+        int sourceY = (specialAnimation ? 4 : direction)
+                * FRAME_HEIGHT;
+
 
         // Body
         gc.drawImage(
@@ -159,17 +167,18 @@ public class Player {
         );
 
         // Hair moves with the head
-        int hairOffsetY = moving
-                ? HAIR_OFFSETS[frame]
-                : 0;
+        int hairOffsetY = specialAnimation
+                ? 0
+                : (moving ? HAIR_OFFSETS[frame] : 0);
 
         gc.drawImage(
-                hairSprites[direction],
+                hairSprites[specialAnimation ? 0 : direction],
                 drawX,
                 drawY + hairOffsetY,
                 FRAME_WIDTH,
                 FRAME_HEIGHT
         );
+
     }
 
 
@@ -217,6 +226,18 @@ public class Player {
         this.direction = direction;
         this.frame = 0;
     }
+
+
+    public void setSpecialFrame(int frame) {
+        specialAnimation = true;
+        specialFrame = Math.max(0, Math.min(frame, 3));
+    }
+
+    public void stopSpecialAnimation() {
+        specialAnimation = false;
+        specialFrame = 0;
+    }
+
 
 
 

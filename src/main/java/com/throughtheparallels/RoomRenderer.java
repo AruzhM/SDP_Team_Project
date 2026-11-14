@@ -21,6 +21,16 @@ public class RoomRenderer {
     private static final int EXIT_WIDTH = 32;
 
 
+    private WorldState worldState = WorldState.NORMAL;
+
+    private double transitionTime = 0;
+
+    private static final double TRANSITION_DURATION = 1.5;
+
+    private final Image[] crystalFrames = new Image[6];
+
+
+
     private final Canvas canvas;
     private final GraphicsContext gc;
     private final Image tileset;
@@ -35,6 +45,30 @@ public class RoomRenderer {
 
 
     public RoomRenderer() {
+
+        for (int i = 0; i < crystalFrames.length; i++) {
+
+            String path = "/assets/effects/crystal - "
+                    + (i + 1) + ".png";
+
+            var url = getClass().getResource(path);
+
+            if (url == null) {
+                throw new IllegalStateException(
+                        "Missing crystal frame: " + path
+                );
+            }
+
+            crystalFrames[i] = new Image(url.toExternalForm());
+
+            if (crystalFrames[i].isError()) {
+                throw new IllegalStateException(
+                        "Cannot load crystal frame: " + path,
+                        crystalFrames[i].getException()
+                );
+            }
+        }
+
 
         canvas = new Canvas(
                 WIDTH * SCALE,
@@ -101,6 +135,56 @@ public class RoomRenderer {
 
     }
 
+    private void renderCrystalEffect() {
+
+        if (worldState != WorldState.TRANSFORMING) {
+            return;
+        }
+
+        // Six frames over 1.5 seconds
+        int frame = Math.min(
+                5,
+                (int) (transitionTime / 0.25)
+        );
+
+        // Center the crystal above the player's head
+        double effectX = player.getX();
+        double effectY = player.getY() - 12;
+
+        gc.drawImage(
+                crystalFrames[frame],
+                effectX,
+                effectY,
+                16,
+                16
+        );
+    }
+
+
+
+    private boolean isParallelWorld() {
+        return worldState == WorldState.PARALLEL;
+    }
+
+    private void drawWorldTile(
+            int normalX, int normalY,
+            int parallelX, int parallelY,
+            int x, int y
+    ) {
+        int sourceX = isParallelWorld()
+                ? parallelX : normalX;
+
+        int sourceY = isParallelWorld()
+                ? parallelY : normalY;
+
+        drawSprite(
+                sourceX, sourceY,
+                16, 16,
+                x, y
+        );
+    }
+
+
     private void drawSprite(
             int sourceX, int sourceY,
             int sourceWidth, int sourceHeight,
@@ -116,19 +200,43 @@ public class RoomRenderer {
     }
 
 
+    private final Image hikariSprite = new Image(
+            java.util.Objects.requireNonNull(
+                    getClass().getResource(
+                            "/assets/characters/npc/hikari_sprite.png"
+                    ),
+                    "Missing Hikari sprite"
+            ).toExternalForm()
+    );
+
+    private static final int HIKARI_X = 64;
+    private static final int HIKARI_Y = 80;
+
+
+
     public void renderBedroom(){
 
-        // FLOOR
+
         for (int y = 32; y < HEIGHT; y += 16) {
             for (int x = 0; x < WIDTH; x += 16) {
-                drawSprite(0, 0, 16, 16, x, y);
+
+                drawWorldTile(
+                        0, 0,       // Normal floor
+                        16, 0,     // Parallel floor
+                        x, y
+                );
             }
         }
+
 
         // BACK WALL
         for (int y = 0; y < 48; y += 16) {
             for (int x = 0; x < WIDTH; x += 16) {
-                drawSprite(32, 0, 16, 16, x, y);
+                drawWorldTile(
+                        32, 0,       // Normal wallpaper
+                        48, 0,     // Parallel wallpaper
+                        x, y
+                );
             }
         }
 
@@ -164,6 +272,26 @@ public class RoomRenderer {
         if (crystalVisible) {
             gc.drawImage(crystal, crystalX, crystalY, 16, 16);
         }
+
+        if (worldState == WorldState.PARALLEL) {
+
+            gc.drawImage(
+                    hikariSprite,
+                    HIKARI_X,
+                    HIKARI_Y,
+                    16, 32
+            );
+        }
+
+        if (worldState == WorldState.NORMAL) {
+            gc.drawImage(
+                    crystal,
+                    crystalX,
+                    crystalY,
+                    16, 16
+            );
+        }
+
 
     }
 
@@ -252,8 +380,11 @@ public class RoomRenderer {
             renderHallway();
         }
 
-        // Draw the character after the room
+        // Draw the player
         player.render(gc);
+
+        // Draw the crystal effect over the player
+        renderCrystalEffect();
     }
 
 
@@ -263,11 +394,39 @@ public class RoomRenderer {
 
 
 
+
     public void update(
             double deltaTime,
             double dx,
             double dy
     ) {
+
+        if (worldState == WorldState.TRANSFORMING) {
+
+            transitionTime += deltaTime;
+
+            // Four frames across the transition
+            int animationFrame = Math.min(
+                    3,
+                    (int) (transitionTime / 0.25)
+            );
+
+            player.setSpecialFrame(animationFrame);
+
+            if (transitionTime >= TRANSITION_DURATION) {
+
+                worldState = WorldState.PARALLEL;
+
+                player.stopSpecialAnimation();
+
+                // Hikari will now be drawn
+            }
+
+            // Do not move while transforming
+            render();
+            return;
+        }
+
         player.update(
                 deltaTime,
                 dx,
@@ -278,6 +437,7 @@ public class RoomRenderer {
 
         render();
     }
+
 
     public void setCharacter(CharacterProfile profile) {
         player.applyProfile(profile);
@@ -365,10 +525,6 @@ public class RoomRenderer {
         render();
     }
 
-
-
-
-
     public boolean isPlayerNearHallwayExit() {
 
         double playerCenterX = player.getX() + 8;
@@ -385,8 +541,21 @@ public class RoomRenderer {
     }
 
 
+    public boolean startCrystalTransition() {
 
+        if (currentRoom != RoomType.BEDROOM ||
+                worldState != WorldState.NORMAL ||
+                !isPlayerNearCrystal()) {
+            return false;
+        }
 
+        worldState = WorldState.TRANSFORMING;
+        transitionTime = 0;
 
+        player.setDirection(0);
+        player.setSpecialFrame(0);
+
+        return true;
+    }
 
 }

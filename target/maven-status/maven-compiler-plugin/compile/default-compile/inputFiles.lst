@@ -8,5 +8,13 @@ C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallel
 C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\RoomRenderer.java
 C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\RoomType.java
 C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\story\CrystalEvent.java
+C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\story\CrystalEventFactory.java
 C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\story\DeskEvent.java
+C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\story\DeskEventFactory.java
+C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\story\DialogueManager.java
+C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\story\DoubtStrategy.java
+C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\story\EventFactory.java
 C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\story\GameEvent.java
+C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\story\InteractionStrategy.java
+C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\story\TrustStrategy.java
+C:\Users\Sara\IdeaProjects\SDP_Team_Project\src\main\java\com\throughtheparallels\WorldState.java

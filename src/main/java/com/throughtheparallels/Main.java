@@ -60,8 +60,13 @@ public class Main extends Application {
             }
 
             if (key == KeyCode.E) {
-                game.interactWithDoor();
+
+                // Crystal interaction has priority.
+                if (!game.activateCrystal()) {
+                    game.interactWithDoor();
+                }
             }
+
         });
 
 
