@@ -36,11 +36,19 @@ public class CharacterCreator {
             new ComboBox<>();
 
     private final Consumer<CharacterProfile> onStart;
+    private final Runnable onContinue;
+    private final boolean hasSave;
 
     public CharacterCreator(
             Consumer<CharacterProfile> onStart
     ) {
+        this(onStart, null, false);
+    }
+
+    public CharacterCreator(Consumer<CharacterProfile> onStart, Runnable onContinue, boolean hasSave) {
         this.onStart = onStart;
+        this.onContinue = onContinue;
+        this.hasSave = hasSave;
 
         configureOptions();
     }
@@ -206,6 +214,20 @@ public class CharacterCreator {
                 errorLabel,
                 startButton
         );
+
+        if (onContinue != null) {
+            Button continueButton = new Button("CONTINUE SAVED GAME");
+            continueButton.setMaxWidth(Double.MAX_VALUE);
+            continueButton.setDisable(!hasSave);
+            continueButton.setOnAction(e -> onContinue.run());
+            form.getChildren().add(continueButton);
+            if (hasSave) {
+                Label saveHint = new Label("Starting a new game replaces the existing save.");
+                saveHint.setWrapText(true);
+                saveHint.setStyle("-fx-text-fill: #c5b7d8;");
+                form.getChildren().add(saveHint);
+            }
+        }
 
         HBox content = new HBox(
                 30, previewPanel, form

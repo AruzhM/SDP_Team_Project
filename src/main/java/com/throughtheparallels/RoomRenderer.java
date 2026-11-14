@@ -558,6 +558,36 @@ public class RoomRenderer {
         return true;
     }
 
+    // Progression integration only; the team's transition/animation above is unchanged.
+    public WorldState getWorldState() { return worldState; }
+    public double getPlayerX() { return player.getX(); }
+    public double getPlayerY() { return player.getY(); }
+    public int getPlayerDirection() { return player.getDirection(); }
+
+    public boolean isPlayerNearDesk() {
+        return currentRoom == RoomType.BEDROOM
+                && Math.abs(player.getX() - 72) < 24 && Math.abs(player.getY() - 48) < 20;
+    }
+
+    public boolean isHikariVisible() {
+        return currentRoom == RoomType.BEDROOM && worldState == WorldState.PARALLEL;
+    }
+
+    public boolean isPlayerNearHikari() {
+        return isHikariVisible() && Math.hypot(player.getX() - HIKARI_X, player.getY() - HIKARI_Y) < 26;
+    }
+
+    /** Loading restores a stable world; an interrupted transition can be activated again. */
+    public void restoreProgress(boolean crystalCollected, RoomType savedRoom, double x, double y, int direction) {
+        currentRoom = savedRoom;
+        worldState = crystalCollected ? WorldState.PARALLEL : WorldState.NORMAL;
+        crystalVisible = !crystalCollected;
+        transitionTime = 0;
+        player.stopSpecialAnimation();
+        player.setPosition(x, y);
+        player.setDirection(direction);
+        render();
+    }
 
     public boolean isPlayerNearHikari() {
 

@@ -191,6 +191,8 @@ public class Player {
     }
 
 
+    public int getDirection() { return direction; }
+
     public void applyProfile(CharacterProfile profile) {
 
         String skinPath =
@@ -237,8 +239,4 @@ public class Player {
         specialAnimation = false;
         specialFrame = 0;
     }
-
-
-
-
 }
