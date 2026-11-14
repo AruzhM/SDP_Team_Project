@@ -115,6 +115,7 @@ public class Main extends Application {
             message.setText(game.chooseEnding(choice));
             refreshHud.run();
         });
+        
         StackPane roomPanel = new StackPane(game.getGameView());
         roomPanel.setMaxSize(528, 360);
         VBox dialogue = new VBox(10, doorHint, eventNotice, message, hikariDialogue, controls);
