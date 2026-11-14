@@ -14,10 +14,22 @@ public class RoomRenderer {
     private static final int crystalX = 0;
     private static final int crystalY = 48;
 
+    private static final int EXIT_X = 120;
+    private static final int EXIT_Y = HEIGHT - 16;
+    private static final int EXIT_SIZE = 16;
+    private static final int EXIT_HEIGHT = 16;
+    private static final int EXIT_WIDTH = 32;
+
+
     private final Canvas canvas;
     private final GraphicsContext gc;
     private final Image tileset;
     private final Image crystal;
+
+    private RoomType currentRoom = RoomType.BEDROOM;
+
+    private final Image hallwayTileset;
+
 
     private final Player player = new Player();
 
@@ -64,6 +76,29 @@ public class RoomRenderer {
                 ).toExternalForm()
         );
 
+
+        var hallwayUrl = getClass().getResource(
+                "/assets/tiles/tileset.png"
+        );
+
+        if (hallwayUrl == null) {
+            throw new IllegalStateException(
+                    "Missing tileset.png"
+            );
+        }
+
+        hallwayTileset = new Image(
+                hallwayUrl.toExternalForm()
+        );
+
+        if (hallwayTileset.isError()) {
+            throw new IllegalStateException(
+                    "Cannot load hallway tileset",
+                    hallwayTileset.getException()
+            );
+        }
+
+
     }
 
     private void drawSprite(
@@ -81,11 +116,7 @@ public class RoomRenderer {
     }
 
 
-    public void render() {
-        player.render(gc);
-
-        // Clear the previous frame
-        gc.clearRect(0, 0, WIDTH, HEIGHT);
+    public void renderBedroom(){
 
         // FLOOR
         for (int y = 32; y < HEIGHT; y += 16) {
@@ -134,13 +165,97 @@ public class RoomRenderer {
             gc.drawImage(crystal, crystalX, crystalY, 16, 16);
         }
 
+    }
 
 
-        player.render(gc);
 
+    private void renderHallway() {
+
+        gc.setFill(
+                javafx.scene.paint.Color.web("#252238")
+        );
+
+        gc.fillRect(
+                0, 0, WIDTH, HEIGHT
+        );
+
+
+        // 2. Hallway floor
+        // Stop 16 pixels before the bottom of the canvas
+        for (int y = 64; y < HEIGHT - EXIT_HEIGHT; y += 16) {
+            for (int x = 0; x < WIDTH; x += 16) {
+
+                drawSprite(
+                        0, 0,       // Floor tile in tileset
+                        16, 16,     // Tile dimensions
+                        x, y        // Position in room
+                );
+            }
+        }
+
+        // Wallpaper
+        for (int y = 0; y < 32; y += 16) {
+            for (int x = 0; x < WIDTH; x += 16) {
+                drawSprite(0, 96, 16, 16, x, y);
+            }
+        }
+
+        // Wood border at the top of paneling
+        for (int x = 0; x < WIDTH; x += 16) {
+            drawSprite(32, 96, 16, 16, x, 32);
+        }
+
+        // Wooden wall paneling
+        for (int y = 48; y < 64; y += 16) {
+            for (int x = 0; x < WIDTH; x += 16) {
+                drawSprite(16, 96, 16, 16, x, y);
+            }
+        }
+
+        // Painting
+        drawSprite(
+                48, 96, 16, 16,
+                WIDTH / 2 - 8, 16
+        );
+
+        //window 1
+        drawSprite(32, 64, 16, 16, 32, 16);
+
+        //window 2
+        drawSprite(32, 64, 16, 16, 144, 16);
+
+
+
+        gc.setFill(
+                javafx.scene.paint.Color.web("#0e0b13")
+        );
+
+        // Black doorway, extending downward
+        gc.fillRect(
+                EXIT_X,
+                EXIT_Y - 8,
+                EXIT_WIDTH,
+                EXIT_HEIGHT + 16
+        );
 
 
     }
+
+
+    public void render() {
+
+        gc.clearRect(0, 0, WIDTH, HEIGHT);
+
+        if (currentRoom == RoomType.BEDROOM) {
+            renderBedroom();
+        } else {
+            renderHallway();
+        }
+
+        // Draw the character after the room
+        player.render(gc);
+    }
+
 
     public Canvas getCanvas() {
         return canvas;
@@ -198,5 +313,80 @@ public class RoomRenderer {
         crystalVisible = false;
         render();
     }
+
+    private void drawTileFrom(
+            Image image,
+            int sourceX,
+            int sourceY,
+            int x,
+            int y
+    ) {
+        gc.drawImage(
+                image,
+                sourceX, sourceY, 16, 16,
+                x, y, 16, 16
+        );
+    }
+
+
+    public RoomType getCurrentRoom() {
+        return currentRoom;
+    }
+
+
+
+    public void changeRoom(RoomType newRoom) {
+
+        currentRoom = newRoom;
+
+        if (newRoom == RoomType.HALLWAY) {
+
+            // Just inside the hallway's bottom entrance
+            player.setPosition(
+                    EXIT_X + (EXIT_WIDTH - 16) / 2.0,
+                    EXIT_Y - 32
+            );
+
+            // Face up, into the hallway
+            player.setDirection(3);
+
+        } else if (newRoom == RoomType.BEDROOM) {
+
+            // Return to bedroom, just below the door
+            player.setPosition(
+                    120,
+                    32
+            );
+
+            // Face down, into the room
+            player.setDirection(0);
+        }
+
+        render();
+    }
+
+
+
+
+
+    public boolean isPlayerNearHallwayExit() {
+
+        double playerCenterX = player.getX() + 8;
+        double playerFeetY = player.getY() + 32;
+
+        boolean insideEntranceX =
+                playerCenterX >= EXIT_X &&
+                        playerCenterX <= EXIT_X + EXIT_WIDTH;
+
+        boolean nearEntranceY =
+                playerFeetY >= EXIT_Y - 12;
+
+        return insideEntranceX && nearEntranceY;
+    }
+
+
+
+
+
 
 }

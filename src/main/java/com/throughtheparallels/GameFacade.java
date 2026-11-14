@@ -67,15 +67,6 @@ public class GameFacade {
     private boolean hasCrystal = false;
 
 
-    public String interactWithDoor() {
-
-        if (!hasCrystal) {
-            return "The door is locked. Something is wrong...";
-        }
-
-        return "The door opened...? A strange light fills the room...";
-    }
-
     public String interactWithCrystal() {
 
         if (hasCrystal) {
@@ -90,5 +81,32 @@ public class GameFacade {
     public boolean hasCrystal() {
         return hasCrystal;
     }
+
+
+    public boolean interactWithDoor() {
+
+        if (!gameStarted) {
+            return false;
+        }
+
+        if (room.getCurrentRoom() == RoomType.BEDROOM) {
+
+
+            if (room.isPlayerNearDoor()) {
+                room.changeRoom(RoomType.HALLWAY);
+                return true;
+            }
+
+        } else {
+
+            if (room.isPlayerNearHallwayExit()) {
+                room.changeRoom(RoomType.BEDROOM);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
 }
