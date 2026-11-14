@@ -25,6 +25,11 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
+import com.throughtheparallels.story.DialogueView;
+import javafx.geometry.Pos;
+
+
 public class Main extends Application {
     private final SaveManager saves = new SaveManager();
 
@@ -109,6 +114,34 @@ public class Main extends Application {
                 eventNotice.setText("Saved progress restored.");
             }
         });
+
+        GameFacade game = new GameFacade();
+        game.startGame(profile);
+
+        // Create your teammate's dialogue interface
+        DialogueView dialogue = new DialogueView();
+
+        // Place the dialogue on top of the game canvas
+        StackPane root = new StackPane(
+                game.getGameView(),
+                dialogue
+        );
+
+        // Dialogue appears near the bottom of the window
+        StackPane.setAlignment(
+                dialogue,
+                Pos.BOTTOM_CENTER
+        );
+
+        StackPane.setMargin(
+                dialogue,
+                new javafx.geometry.Insets(0, 0, 25, 0)
+        );
+
+
+        root.setStyle(
+                "-fx-background-color: #252238;"
+        );
 
         follow.setOnAction(event -> {
             message.setText(game.chooseEnding(SaveManager.Ending.FOLLOW_HIKARI));
@@ -201,6 +234,62 @@ public class Main extends Application {
                 if (!pressedKeys.contains(KeyCode.ESCAPE)) {
                     if (game.isPaused()) resume.run();
                     else {
+
+        Set<KeyCode> pressedKeys =
+                EnumSet.noneOf(KeyCode.class);
+
+
+        scene.setOnKeyPressed(event -> {
+
+            KeyCode key = event.getCode();
+
+            // Ignore repeated key events while held
+            if (!pressedKeys.add(key)) {
+                return;
+            }
+
+
+            if (key == KeyCode.E && !dialogue.isVisible()) {
+
+                if (game.canTalkToHikari()) {
+
+                    dialogue.showHikariChoice();
+
+                } else if (!game.activateCrystal()) {
+
+                    game.interactWithDoor();
+                }
+            }
+
+            // Escape closes the dialogue
+            if (key == KeyCode.ESCAPE &&
+                    dialogue.isVisible()) {
+
+                dialogue.hideDialogue();
+            }
+
+
+            dialogue.setOnOutcome(outcome -> {
+
+                System.out.println(
+                        "Hikari dialogue outcome: " + outcome
+                );
+
+                // Later: forward to the quest/save system.
+            });
+
+
+
+        });
+
+
+        scene.setOnKeyReleased(event ->
+                pressedKeys.remove(event.getCode())
+        );
+
+        stage.focusedProperty().addListener(
+                (obs, oldValue, focused) -> {
+                    if (!focused) {
                         pressedKeys.clear();
                         game.setPaused(true);
                         pauseMenu.setOpen(true);
@@ -258,6 +347,37 @@ public class Main extends Application {
                     message.setText(lastStoryMessage);
                 }
                 refreshHud.run();
+
+                deltaTime = Math.min(
+                        deltaTime, 0.05
+                );
+
+                double dx = 0;
+                double dy = 0;
+
+                if (pressedKeys.contains(KeyCode.W))
+                    dy--;
+
+                if (pressedKeys.contains(KeyCode.S))
+                    dy++;
+
+                if (pressedKeys.contains(KeyCode.A))
+                    dx--;
+
+                if (pressedKeys.contains(KeyCode.D))
+                    dx++;
+
+
+                if (dialogue.isVisible()) {
+
+                    // Stop movement while talking
+                    game.update(deltaTime, 0, 0);
+
+                } else {
+
+                    game.update(deltaTime, dx, dy);
+                }
+
             }
         };
         stage.setScene(scene);
@@ -289,6 +409,14 @@ public class Main extends Application {
         label.setWrapText(true);
         label.setMaxWidth(880);
         return label;
+
+        game.canTalkToHikari();
+    }
+
+
+
+    public static void main(String[] args) {
+        launch(args);
     }
 
     private void updateTitle(Stage stage, GameFacade game) {

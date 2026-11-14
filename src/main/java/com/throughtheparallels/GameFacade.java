@@ -71,6 +71,26 @@ public class GameFacade {
                 && room.startCrystalTransition();
     }
 
+    public CharacterProfile getCurrentCharacter() {
+        return currentCharacter;
+    }
+
+    public boolean isGameStarted() {
+        return gameStarted;
+    }
+
+    public boolean isPlayerNearCrystal() {
+        return room.isPlayerNearCrystal();
+    }
+
+    public boolean isPlayerNearDoor() {
+        return room.isPlayerNearDoor();
+    }
+
+    //demo interactions
+    private boolean hasCrystal = false;
+
+
     public String interactWithCrystal() {
         if (paused) return "Game paused. Resume to continue.";
         if (!gameStarted || !isPlayerNearCrystal()) return "Move closer to the crystal.";
