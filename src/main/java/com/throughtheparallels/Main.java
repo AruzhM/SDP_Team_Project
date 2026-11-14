@@ -90,8 +90,10 @@ public class Main extends Application {
             message.setManaged(!game.isChoicePending());
             hikariDialogue.setDisable(game.isPaused());
             if (game.isChoicePending()) {
-                if (!hikariDialogue.isVisible()) hikariDialogue.showHikariChoice();
-            } else {
+                if (!hikariDialogue.isVisible()) {
+                    hikariDialogue.showHikariChoice();
+                }
+            } else if (!hikariDialogue.isTrustDialogueActive()) {
                 hikariDialogue.hideDialogue();
             }
 
@@ -221,7 +223,27 @@ public class Main extends Application {
             // Ignore OS key repeats: each press triggers an action only once.
             if (!pressedKeys.add(event.getCode())) return;
             switch (event.getCode()) {
-                case E -> message.setText(game.interact());
+                case E -> {
+                    if (hikariDialogue.isTrustDialogueActive()) {
+                        break;
+                    }
+
+                    boolean hallwayHikari =
+                            game.getEnding() == SaveManager.Ending.FOLLOW_HIKARI
+                                    && game.getCurrentRoom() == RoomType.HALLWAY
+                                    && game.isPlayerNearHikari();
+                    if (hallwayHikari) {
+                        String interaction = game.interact();
+
+                        if (interaction.equals(game.getEndingDescription())) {
+                            hikariDialogue.showHallwayDialogue();
+                        } else {
+                            message.setText(interaction);
+                        }
+                    } else {
+                        message.setText(game.interact());
+                    }
+                }
                 case ENTER -> {
                     if (hikariDialogue.isTrustDialogueActive()) {
                         hikariDialogue.advanceTrustDialogue();

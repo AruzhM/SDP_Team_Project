@@ -94,7 +94,9 @@ public class GameFacade {
         events.publish(GameEventPublisher.Type.DESK_EXAMINED, "desk");
         return finishAction("\"I don't remember leaving this here...\" A crystal glows on the bedside table.");
     }
-
+    public boolean isPlayerNearHikari() {
+        return gameStarted && room.isPlayerNearHikari();
+    }
     public String interactWithHikari() {
         if (paused) return "Game paused. Resume to continue.";
         if (!gameStarted || !room.isPlayerNearHikari()) return "Move closer to Hikari.";
