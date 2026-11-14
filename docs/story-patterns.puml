@@ -1,0 +1,49 @@
+@startuml
+title Through the Parallels - Story Design Patterns
+
+interface GameEvent {
+    +getDescription(): String
+    +execute(): void
+}
+
+class DeskEvent
+class CrystalEvent
+
+abstract class EventFactory {
+    +createEvent(): GameEvent
+    +triggerEvent(): void
+}
+
+class DeskEventFactory
+class CrystalEventFactory
+
+GameEvent <|.. DeskEvent
+GameEvent <|.. CrystalEvent
+
+EventFactory <|-- DeskEventFactory
+EventFactory <|-- CrystalEventFactory
+
+EventFactory ..> GameEvent : creates
+DeskEventFactory ..> DeskEvent : creates
+CrystalEventFactory ..> CrystalEvent : creates
+
+interface InteractionStrategy {
+    +getDialogue(): String
+    +getOutcome(): String
+}
+
+class TrustStrategy
+class DoubtStrategy
+
+class DialogueManager {
+    -strategy: InteractionStrategy
+    +setStrategy(strategy): void
+    +getDialogue(): String
+    +getOutcome(): String
+}
+
+InteractionStrategy <|.. TrustStrategy
+InteractionStrategy <|.. DoubtStrategy
+DialogueManager o--> InteractionStrategy : uses
+
+@enduml
