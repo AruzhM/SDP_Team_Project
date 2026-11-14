@@ -273,7 +273,8 @@ public class RoomRenderer {
             gc.drawImage(crystal, crystalX, crystalY, 16, 16);
         }
 
-        if (worldState == WorldState.PARALLEL) {
+        if (worldState == WorldState.PARALLEL
+                && !hikariInHallway) {
 
             gc.drawImage(
                     hikariSprite,
@@ -282,6 +283,7 @@ public class RoomRenderer {
                     16, 32
             );
         }
+
 
 
 
@@ -357,6 +359,19 @@ public class RoomRenderer {
                 EXIT_WIDTH,
                 EXIT_HEIGHT + 16
         );
+
+
+        if (worldState == WorldState.PARALLEL
+                && hikariInHallway) {
+
+            gc.drawImage(
+                    hikariSprite,
+                    HIKARI_HALLWAY_X,
+                    HIKARI_HALLWAY_Y,
+                    16, 32
+            );
+        }
+
 
 
     }
@@ -600,6 +615,18 @@ public class RoomRenderer {
 
         return distance < 28;
     }
+
+    private boolean hikariInHallway = false;
+
+    private static final int HIKARI_HALLWAY_X = 64;
+    private static final int HIKARI_HALLWAY_Y = 64;
+
+
+    public void moveHikariToHallway() {
+        hikariInHallway = true;
+        render();
+    }
+
 
 
 }

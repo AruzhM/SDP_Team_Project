@@ -199,4 +199,9 @@ public class GameFacade {
     public boolean hasCrystal() { return quests.isCompleted(QuestManager.FIND_CRYSTAL); }
     public QuestManager getQuestManager() { return quests; }
     public GameEventPublisher getEventPublisher() { return events; }
+
+    public void moveHikariToHallway() {
+        room.moveHikariToHallway();
+    }
+
 }
