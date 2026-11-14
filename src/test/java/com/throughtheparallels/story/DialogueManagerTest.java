@@ -10,7 +10,7 @@ public class DialogueManagerTest {
                 new DialogueManager(new TrustStrategy());
 
         assertEquals(
-                "Hikari: I'm glad you trust me. Follow me.",
+                "I'm glad you trust me. Follow me.",
                 manager.getDialogue()
         );
 
@@ -26,7 +26,7 @@ public class DialogueManagerTest {
                 new DialogueManager(new DoubtStrategy());
 
         assertEquals(
-                "Hikari: I understand your doubts. I'll wait here.",
+                "I understand your doubts. I'll wait here.",
                 manager.getDialogue()
         );
 

@@ -4,7 +4,7 @@ public class DoubtStrategy implements InteractionStrategy {
 
     @Override
     public String getDialogue() {
-        return "Hikari: I understand your doubts. I'll wait here.";
+        return "I understand your doubts. I'll wait here.";
     }
 
     @Override
