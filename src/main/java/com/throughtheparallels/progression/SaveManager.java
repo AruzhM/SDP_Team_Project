@@ -2,6 +2,7 @@ package com.throughtheparallels.progression;
 
 import com.throughtheparallels.CharacterBuilder;
 import com.throughtheparallels.CharacterProfile;
+import com.throughtheparallels.RoomType;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -19,29 +20,25 @@ import java.util.Set;
 
 /** Versioned single-slot save. No Java object deserialization or external libraries. */
 public final class SaveManager {
-    public static final int MAX_SEAL_HEALTH = 60;
     public enum Ending { UNDECIDED, FOLLOW_HIKARI, STAY_IN_ROOM }
     private final Path path;
 
     public record SaveData(CharacterProfile profile, double x, double y, int direction,
-                           int sealHealth, double cooldownRemaining, Map<String, Integer> quests, Ending ending) {
+                           Map<String, Integer> quests, Ending ending, RoomType room) {
         public SaveData {
             Objects.requireNonNull(profile, "Character profile");
             quests = Map.copyOf(quests);
             Objects.requireNonNull(ending, "Ending");
+            Objects.requireNonNull(room, "Room");
             if (!Double.isFinite(x) || !Double.isFinite(y) || x < 0 || x > 160 || y < 32 || y > 88
-                    || direction < 0 || direction > 3 || sealHealth < 0 || sealHealth > MAX_SEAL_HEALTH
-                    || !Double.isFinite(cooldownRemaining) || cooldownRemaining < 0 || cooldownRemaining > 0.8) {
-                throw new IllegalArgumentException("Invalid player or combat state");
+                    || direction < 0 || direction > 3) {
+                throw new IllegalArgumentException("Invalid player state");
             }
             validateProfile(profile);
             try (QuestManager manager = new QuestManager(new GameEventPublisher())) {
                 manager.restore(quests);
-                boolean crystal = manager.isCompleted(QuestManager.FIND_CRYSTAL);
                 boolean decided = manager.isCompleted(QuestManager.CROSS_BOUNDARY);
-                if ((!crystal && (sealHealth != MAX_SEAL_HEALTH || cooldownRemaining != 0))
-                        || decided != (ending != Ending.UNDECIDED)
-                        || (ending == Ending.FOLLOW_HIKARI && sealHealth != 0)) {
+                if (decided != (ending != Ending.UNDECIDED)) {
                     throw new IllegalArgumentException("Inconsistent quest and world state");
                 }
             }
@@ -59,7 +56,8 @@ public final class SaveManager {
     public void save(SaveData data) throws IOException {
         Properties values = new Properties();
         CharacterProfile profile = data.profile();
-        values.setProperty("version", "2");
+        values.setProperty("version", "3");
+        values.setProperty("world.room", data.room().name());
         values.setProperty("story.ending", data.ending().name());
         values.setProperty("character.name", profile.getName());
         values.setProperty("character.gender", profile.getGender());
@@ -69,12 +67,10 @@ public final class SaveManager {
         values.setProperty("player.x", Double.toString(data.x()));
         values.setProperty("player.y", Double.toString(data.y()));
         values.setProperty("player.direction", Integer.toString(data.direction()));
-        values.setProperty("seal.health", Integer.toString(data.sealHealth()));
-        values.setProperty("ability.cooldown", Double.toString(data.cooldownRemaining()));
         data.quests().forEach((id, progress) -> values.setProperty("quest." + id, progress.toString()));
 
         Files.createDirectories(path.getParent());
-        // Keep the original pre-story save when it is first upgraded to version 2.
+        // Keep the original pre-story save when it is first upgraded to version 3.
         if (Files.isRegularFile(path)) {
             Properties previous = new Properties();
             try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
@@ -82,13 +78,16 @@ public final class SaveManager {
             } catch (IllegalArgumentException ignored) {
                 // Starting a new game may explicitly replace an invalid slot.
             }
-            Path backup = path.resolveSibling(path.getFileName() + ".v1.bak");
-            if ("1".equals(previous.getProperty("version")) && !Files.exists(backup)) Files.copy(path, backup);
+            String previousVersion = previous.getProperty("version", "");
+            if (Set.of("1", "2").contains(previousVersion)) {
+                Path backup = path.resolveSibling(path.getFileName() + ".v" + previousVersion + ".bak");
+                if (!Files.exists(backup)) Files.copy(path, backup);
+            }
         }
         Path temporary = Files.createTempFile(path.getParent(), "save-", ".tmp");
         try {
             try (Writer writer = Files.newBufferedWriter(temporary, StandardCharsets.UTF_8)) {
-                values.store(writer, "Through The Parallels - save version 2");
+                values.store(writer, "Through The Parallels - save version 3");
             }
             try {
                 Files.move(temporary, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
@@ -105,7 +104,7 @@ public final class SaveManager {
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             values.load(reader);
             String version = required(values, "version");
-            if (!Set.of("1", "2").contains(version)) throw new IllegalArgumentException("Unsupported save version");
+            if (!Set.of("1", "2", "3").contains(version)) throw new IllegalArgumentException("Unsupported save version");
             CharacterProfile profile = new CharacterBuilder()
                     .name(required(values, "character.name"))
                     .gender(required(values, "character.gender"))
@@ -122,8 +121,7 @@ public final class SaveManager {
                     Double.parseDouble(required(values, "player.x")),
                     Double.parseDouble(required(values, "player.y")),
                     Integer.parseInt(required(values, "player.direction")),
-                    Integer.parseInt(required(values, "seal.health")),
-                    Double.parseDouble(required(values, "ability.cooldown")), quests, ending);
+                    quests, ending, "3".equals(version) ? RoomType.valueOf(required(values, "world.room")) : RoomType.BEDROOM);
         } catch (IllegalArgumentException | NullPointerException ex) {
             throw new IOException("Invalid save: " + ex.getMessage(), ex);
         }

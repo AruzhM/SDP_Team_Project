@@ -10,8 +10,8 @@ import java.util.Set;
 /** Observer subject. Used on the game thread; nested events are delivered in FIFO order. */
 public final class GameEventPublisher {
     public enum Type {
-        CRYSTAL_COLLECTED, DESK_EXAMINED, ABILITY_USED, SEAL_DAMAGED,
-        SEAL_BROKEN, DOOR_OPENED, HIKARI_APPEARED, HIKARI_TALKED, ENDING_CHOSEN,
+        CRYSTAL_COLLECTED, DESK_EXAMINED, DOOR_OPENED,
+        HIKARI_APPEARED, HIKARI_TALKED, ENDING_CHOSEN,
         QUEST_COMPLETED, GAME_SAVED, GAME_LOADED
     }
 

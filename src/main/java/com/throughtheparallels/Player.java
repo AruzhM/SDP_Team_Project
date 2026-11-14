@@ -23,21 +23,10 @@ public class Player {
 
     private double animationTimer = 0;
     private boolean moving = false;
-    public static final double CRYSTAL_LIFT_DURATION = 1.6;
-    private double crystalLiftRemaining;
 
-    public void beginCrystalLift() {
-        crystalLiftRemaining = CRYSTAL_LIFT_DURATION;
-        direction = 0;
-        frame = 0;
-        animationTimer = 0;
-        moving = false;
-    }
+    private boolean specialAnimation = false;
+    private int specialFrame = 0;
 
-    public boolean isLiftingCrystal() { return crystalLiftRemaining > 0; }
-    public double getCrystalLiftProgress() { return 1 - crystalLiftRemaining / CRYSTAL_LIFT_DURATION; }
-    public int getSpriteSourceX() { return isLiftingCrystal() ? 0 : frame * FRAME_WIDTH; }
-    public int getSpriteSourceY() { return isLiftingCrystal() ? 128 : direction * FRAME_HEIGHT; }
 
     // Head shifts down on walking frames 1 and 3
     private static final int[] HAIR_OFFSETS = {
@@ -108,10 +97,6 @@ public class Player {
             double roomHeight
     ) {
 
-        if (isLiftingCrystal()) {
-            crystalLiftRemaining = Math.max(0, crystalLiftRemaining - deltaTime);
-            return;
-        }
         moving = dx != 0 || dy != 0;
 
         if (!moving) {
@@ -165,8 +150,12 @@ public class Player {
             double drawX,
             double drawY
     ) {
-        int sourceX = getSpriteSourceX();
-        int sourceY = getSpriteSourceY();
+        int sourceX = (specialAnimation ? specialFrame : frame)
+                * FRAME_WIDTH;
+
+        int sourceY = (specialAnimation ? 4 : direction)
+                * FRAME_HEIGHT;
+
 
         // Body
         gc.drawImage(
@@ -178,17 +167,18 @@ public class Player {
         );
 
         // Hair moves with the head
-        int hairOffsetY = moving
-                ? HAIR_OFFSETS[frame]
-                : 0;
+        int hairOffsetY = specialAnimation
+                ? 0
+                : (moving ? HAIR_OFFSETS[frame] : 0);
 
         gc.drawImage(
-                hairSprites[direction],
+                hairSprites[specialAnimation ? 0 : direction],
                 drawX,
                 drawY + hairOffsetY,
                 FRAME_WIDTH,
                 FRAME_HEIGHT
         );
+
     }
 
 
@@ -200,18 +190,8 @@ public class Player {
         return y;
     }
 
+
     public int getDirection() { return direction; }
-
-    public void restorePosition(double x, double y, int direction) {
-        this.x = x;
-        this.y = y;
-        this.direction = direction;
-        crystalLiftRemaining = 0;
-        frame = 0;
-        animationTimer = 0;
-        moving = false;
-    }
-
 
     public void applyProfile(CharacterProfile profile) {
 
@@ -231,4 +211,32 @@ public class Player {
         setHair(hairName);
     }
 
+    public void setPosition(double x, double y) {
+        this.x = x;
+        this.y = y;
+    }
+
+
+    public void setDirection(int direction) {
+
+        if (direction < 0 || direction > 3) {
+            throw new IllegalArgumentException(
+                    "Invalid direction"
+            );
+        }
+
+        this.direction = direction;
+        this.frame = 0;
+    }
+
+
+    public void setSpecialFrame(int frame) {
+        specialAnimation = true;
+        specialFrame = Math.max(0, Math.min(frame, 3));
+    }
+
+    public void stopSpecialAnimation() {
+        specialAnimation = false;
+        specialFrame = 0;
+    }
 }

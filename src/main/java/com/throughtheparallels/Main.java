@@ -22,7 +22,6 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.EnumSet;
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -58,14 +57,13 @@ public class Main extends Application {
 
     void showGame(Stage stage, GameFacade game) {
         Label journal = label(14);
-        Label crystalStatus = label(13);
         Label message = label(14);
         Label eventNotice = label(12);
         Label doorHint = label(14);
         doorHint.setId("door-hint");
         doorHint.setStyle("-fx-text-fill: #f4d59a; -fx-font-size: 14px;");
         Label controls = label(13);
-        controls.setText("WASD: move  |  E: interact  |  SPACE: crystal pulse  |  F5: save  |  F9: load  |  ESC: pause");
+        controls.setText("WASD: move  |  E: interact  |  F5: save  |  F9: load  |  ESC: pause");
         message.setText(game.getStoryMessage());
         journal.setId("quest-journal");
         journal.setMinWidth(330);
@@ -100,10 +98,7 @@ public class Main extends Application {
             doorHint.setManaged(!hint.isEmpty());
             choices.setVisible(game.isChoicePending());
             choices.setManaged(game.isChoicePending());
-            crystalStatus.setText(game.hasCrystal()
-                    ? String.format(Locale.ROOT, "Inventory: crystal | %d damage | range %.0f | recharge %.1fs",
-                            game.getAbility().getDamage(), game.getAbility().getRange(), game.getCooldownRemaining())
-                    : "Inventory: empty — find the crystal.");
+
         };
         game.getEventPublisher().subscribe(event -> {
             if (event.type() == GameEventPublisher.Type.QUEST_COMPLETED) {
@@ -129,19 +124,15 @@ public class Main extends Application {
         dialogue.setMaxWidth(912);
         dialogue.setPadding(new Insets(18));
         dialogue.setStyle("-fx-background-color: #332d47; -fx-background-radius: 12;");
-        StackPane root = new StackPane(roomPanel, journal, crystalStatus, dialogue);
+        StackPane root = new StackPane(roomPanel, journal, dialogue);
         StackPane.setAlignment(journal, Pos.TOP_LEFT);
         StackPane.setMargin(journal, new Insets(24, 0, 0, 24));
         StackPane.setAlignment(roomPanel, Pos.CENTER_RIGHT);
         StackPane.setMargin(roomPanel, new Insets(0, 24, 80, 0));
-        crystalStatus.setMaxWidth(528);
-        StackPane.setAlignment(crystalStatus, Pos.TOP_RIGHT);
-        StackPane.setMargin(crystalStatus, new Insets(24, 24, 0, 0));
         StackPane.setAlignment(dialogue, Pos.BOTTOM_CENTER);
         StackPane.setMargin(dialogue, new Insets(0, 24, 24, 24));
         // Overlay panels use their content height instead of filling the play area.
         journal.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
-        crystalStatus.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
         dialogue.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
         root.setStyle("-fx-background-color: #252238;");
         PauseMenu pauseMenu = new PauseMenu();
@@ -232,7 +223,6 @@ public class Main extends Application {
             if (!pressedKeys.add(event.getCode())) return;
             switch (event.getCode()) {
                 case E -> message.setText(game.interact());
-                case SPACE -> message.setText(game.useCrystalAbility());
                 case DIGIT1, NUMPAD1 -> {
                     if (game.isChoicePending()) message.setText(game.chooseEnding(SaveManager.Ending.FOLLOW_HIKARI));
                 }
