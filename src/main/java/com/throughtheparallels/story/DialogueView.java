@@ -1,15 +1,22 @@
 package com.throughtheparallels.story;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import java.util.Objects;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Region;
 
 public class DialogueView extends VBox {
 
+    private final ImageView hikariPortrait;
     private final Label speakerLabel;
     private final Label dialogueLabel;
     private final HBox choices;
+
+
 
     private final DialogueManager manager =
             new DialogueManager(new TrustStrategy());
@@ -18,7 +25,12 @@ public class DialogueView extends VBox {
 
         setSpacing(10);
         setPadding(new Insets(15));
+
+        setPrefWidth(600);
         setMaxWidth(600);
+
+        setMinHeight(Region.USE_PREF_SIZE);
+        setMaxHeight(Region.USE_PREF_SIZE);
 
         setStyle(
                 "-fx-background-color: #252238;" +
@@ -40,6 +52,21 @@ public class DialogueView extends VBox {
                         "-fx-font-size: 16px;"
         );
 
+        hikariPortrait = new ImageView(
+                new Image(
+                        Objects.requireNonNull(
+                                getClass().getResource(
+                                        "/assets/characters/hikari_portrait.png"
+                                )
+                        ).toExternalForm()
+                )
+        );
+
+        hikariPortrait.setFitWidth(110);
+        hikariPortrait.setFitHeight(110);
+        hikariPortrait.setPreserveRatio(true);
+        hikariPortrait.setSmooth(false);  
+
         Button trustButton = new Button("Trust Hikari");
         Button doubtButton = new Button("Doubt Hikari");
 
@@ -53,9 +80,21 @@ public class DialogueView extends VBox {
 
         choices = new HBox(10, trustButton, doubtButton);
 
-        getChildren().addAll(
+
+        VBox dialogueText = new VBox(
+                8,
                 speakerLabel,
-                dialogueLabel,
+                dialogueLabel
+        );
+
+        HBox dialogueContent = new HBox(
+                15,
+                hikariPortrait,
+                dialogueText
+        );
+
+        getChildren().addAll(
+                dialogueContent,
                 choices
         );
 
