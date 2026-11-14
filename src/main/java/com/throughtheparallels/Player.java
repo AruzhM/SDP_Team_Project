@@ -23,6 +23,21 @@ public class Player {
 
     private double animationTimer = 0;
     private boolean moving = false;
+    public static final double CRYSTAL_LIFT_DURATION = 1.6;
+    private double crystalLiftRemaining;
+
+    public void beginCrystalLift() {
+        crystalLiftRemaining = CRYSTAL_LIFT_DURATION;
+        direction = 0;
+        frame = 0;
+        animationTimer = 0;
+        moving = false;
+    }
+
+    public boolean isLiftingCrystal() { return crystalLiftRemaining > 0; }
+    public double getCrystalLiftProgress() { return 1 - crystalLiftRemaining / CRYSTAL_LIFT_DURATION; }
+    public int getSpriteSourceX() { return isLiftingCrystal() ? 0 : frame * FRAME_WIDTH; }
+    public int getSpriteSourceY() { return isLiftingCrystal() ? 128 : direction * FRAME_HEIGHT; }
 
     // Head shifts down on walking frames 1 and 3
     private static final int[] HAIR_OFFSETS = {
@@ -93,6 +108,10 @@ public class Player {
             double roomHeight
     ) {
 
+        if (isLiftingCrystal()) {
+            crystalLiftRemaining = Math.max(0, crystalLiftRemaining - deltaTime);
+            return;
+        }
         moving = dx != 0 || dy != 0;
 
         if (!moving) {
@@ -146,8 +165,8 @@ public class Player {
             double drawX,
             double drawY
     ) {
-        int sourceX = frame * FRAME_WIDTH;
-        int sourceY = direction * FRAME_HEIGHT;
+        int sourceX = getSpriteSourceX();
+        int sourceY = getSpriteSourceY();
 
         // Body
         gc.drawImage(
@@ -179,6 +198,18 @@ public class Player {
 
     public double getY() {
         return y;
+    }
+
+    public int getDirection() { return direction; }
+
+    public void restorePosition(double x, double y, int direction) {
+        this.x = x;
+        this.y = y;
+        this.direction = direction;
+        crystalLiftRemaining = 0;
+        frame = 0;
+        animationTimer = 0;
+        moving = false;
     }
 
 
