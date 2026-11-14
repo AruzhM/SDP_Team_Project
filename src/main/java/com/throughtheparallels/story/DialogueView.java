@@ -20,6 +20,7 @@ public class DialogueView extends VBox {
     private final TrustDialogue trustDialogue = new TrustDialogue();
     private final Button continueButton = new Button("Continue →");
     private boolean trustDialogueActive = false;
+    private boolean hallwayDialogueActive = false;
 
 
     private Consumer<InteractionStrategy> onChoice = strategy -> {};
@@ -126,6 +127,7 @@ public class DialogueView extends VBox {
         choices.setVisible(false);
         choices.setManaged(false);
         hideDialogue();
+        hallwayDialogueActive = false;
 
     }
     public boolean isTrustDialogueActive() {
@@ -156,6 +158,12 @@ public class DialogueView extends VBox {
             continueButton.setVisible(false);
             continueButton.setManaged(false);
 
+            if (hallwayDialogueActive) {
+                hallwayDialogueActive = false;
+                hideDialogue();
+                return;
+            }
+
             InteractionStrategy strategy = new TrustStrategy();
             onOutcome.accept(strategy.getOutcome());
             onChoice.accept(strategy);
@@ -163,6 +171,7 @@ public class DialogueView extends VBox {
     }
 
     public void showDialogue(String speaker, String text) {
+        hallwayDialogueActive = false;
         trustDialogueActive = false;
         continueButton.setVisible(false);
         continueButton.setManaged(false);
@@ -184,23 +193,19 @@ public class DialogueView extends VBox {
     public void chooseTrust() {
         if (!isVisible() || !choices.isVisible() || isDisabled()) return;
 
-        manager.setStrategy(new TrustStrategy());
-
-        trustDialogue.reset();
-        trustDialogueActive = true;
-
-        TrustDialogue.DialogueLine line =
-                trustDialogue.getCurrentLine();
-
-        speakerLabel.setText(line.speaker());
-        dialogueLabel.setText(line.text());
+        InteractionStrategy strategy = new TrustStrategy();
+        manager.setStrategy(strategy);
 
         choices.setVisible(false);
         choices.setManaged(false);
 
-        continueButton.setVisible(true);
-        continueButton.setText("Continue →");
-        continueButton.setManaged(true);
+        // Show a short response before the player follows Hikari
+        speakerLabel.setText("Hikari");
+        dialogueLabel.setText(manager.getDialogue());
+
+        // Save the choice and move Hikari to the hallway
+        onOutcome.accept(manager.getOutcome());
+        onChoice.accept(strategy);
     }
 
     public void chooseDoubt() { selectStrategy(new DoubtStrategy()); }
@@ -223,9 +228,29 @@ public class DialogueView extends VBox {
         onChoice.accept(strategy);
     }
 
+    public void showHallwayDialogue() {
+        System.out.println("DEBUG: Hallway dialogue opened!");
+
+        showDialogue("Hikari", "");
+
+        trustDialogue.reset();
+        trustDialogueActive = true;
+        hallwayDialogueActive = true;
+
+        TrustDialogue.DialogueLine line =
+                trustDialogue.getCurrentLine();
+
+        speakerLabel.setText(line.speaker());
+        dialogueLabel.setText(line.text());
+
+        continueButton.setText("Continue →");
+        continueButton.setVisible(true);
+        continueButton.setManaged(true);
+    }
 
     public void hideDialogue() {
         trustDialogueActive = false;
+        hallwayDialogueActive = false;
 
         continueButton.setVisible(false);
         continueButton.setManaged(false);
