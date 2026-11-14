@@ -1,5 +1,4 @@
 package com.throughtheparallels;
-
 import com.throughtheparallels.progression.GameEventPublisher;
 import com.throughtheparallels.progression.Quest;
 import com.throughtheparallels.progression.SaveManager;
@@ -19,7 +18,6 @@ import javafx.stage.WindowEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Set;
@@ -96,6 +94,7 @@ public class Main extends Application {
             } else {
                 hikariDialogue.hideDialogue();
             }
+
 
         };
         game.getEventPublisher().subscribe(event -> {
@@ -218,10 +217,16 @@ public class Main extends Application {
         scene.addEventFilter(KeyEvent.KEY_RELEASED, event -> pressedKeys.remove(event.getCode()));
         scene.setOnKeyPressed(event -> {
             if (game.isPaused()) return;
+
             // Ignore OS key repeats: each press triggers an action only once.
             if (!pressedKeys.add(event.getCode())) return;
             switch (event.getCode()) {
                 case E -> message.setText(game.interact());
+                case ENTER -> {
+                    if (hikariDialogue.isTrustDialogueActive()) {
+                        hikariDialogue.advanceTrustDialogue();
+                    }
+                }
                 case DIGIT1, NUMPAD1 -> {
                     if (game.isChoicePending()) hikariDialogue.chooseTrust();
                 }
