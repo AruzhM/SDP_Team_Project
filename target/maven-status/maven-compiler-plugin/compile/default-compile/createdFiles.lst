@@ -12,6 +12,7 @@ com\throughtheparallels\progression\GameEventPublisher$Event.class
 com\throughtheparallels\Launcher.class
 com\throughtheparallels\story\EventFactory.class
 com\throughtheparallels\Main$1.class
+com\throughtheparallels\story\TrustDialogue$DialogueLine.class
 com\throughtheparallels\story\DialoguePreview.class
 com\throughtheparallels\story\DialogueManager.class
 com\throughtheparallels\progression\SaveManager$Ending.class
@@ -23,6 +24,7 @@ com\throughtheparallels\RoomType.class
 com\throughtheparallels\story\TrustStrategy.class
 com\throughtheparallels\PauseMenu.class
 com\throughtheparallels\story\GameEvent.class
+com\throughtheparallels\story\TrustDialogue.class
 com\throughtheparallels\Player.class
 com\throughtheparallels\progression\Ability.class
 com\throughtheparallels\progression\BasicAbility.class

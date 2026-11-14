@@ -114,10 +114,17 @@ public class GameFacade {
             return "Talk to Hikari before making your choice.";
         }
         ending = choice;
+
         if (choice == SaveManager.Ending.FOLLOW_HIKARI) {
-            room.changeRoom(RoomType.HALLWAY);
-            events.publish(GameEventPublisher.Type.DOOR_OPENED, "bedroom_door");
+
+            // Hikari leaves, but the player stays here
+            room.moveHikariToHallway();
+
+            System.out.println(
+                    "Hikari moved to the hallway."
+            );
         }
+
         events.publish(GameEventPublisher.Type.ENDING_CHOSEN, choice.name());
         storyMessage = finishAction(getEndingDescription());
         return storyMessage;
@@ -151,6 +158,11 @@ public class GameFacade {
         currentCharacter = data.profile();
         ending = data.ending();
         room.restoreProgress(hasCrystal(), data.room(), data.x(), data.y(), data.direction());
+
+        if (ending == SaveManager.Ending.FOLLOW_HIKARI) {
+            room.moveHikariToHallway();
+        }
+
         gameStarted = true;
         storyMessage = hasEnding() ? getEndingDescription() : isChoicePending()
                 ? "Hikari: \"So, you found it too.\" Choose what to do next."
@@ -181,8 +193,11 @@ public class GameFacade {
     public String getStoryMessage() { return storyMessage; }
     public String getEndingDescription() {
         return switch (ending) {
-            case FOLLOW_HIKARI -> "Hikari: \"" + new TrustStrategy().getDialogue()
-                    + "\"\nEnding — Beyond the Boundary: You follow Hikari into the hallway.";
+            case FOLLOW_HIKARI ->
+                    "Hikari: \"" +
+                            new TrustStrategy().getDialogue() +
+                            "\"\nNew objective: Follow Hikari into the hallway.";
+
             case STAY_IN_ROOM -> "Hikari: \"" + new DoubtStrategy().getDialogue()
                     + "\"\nEnding — The Familiar Room: You choose to stay. You can keep exploring.";
             case UNDECIDED -> "Your story is not over yet.";
