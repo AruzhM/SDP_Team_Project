@@ -558,4 +558,29 @@ public class RoomRenderer {
         return true;
     }
 
+
+    public boolean isPlayerNearHikari() {
+
+        // Hikari only exists in the parallel room
+        if (currentRoom != RoomType.BEDROOM ||
+                worldState != WorldState.PARALLEL) {
+            return false;
+        }
+
+        // Compare the characters' feet positions
+        double playerCenterX = player.getX() + 8;
+        double playerFeetY = player.getY() + 32;
+
+        double hikariCenterX = HIKARI_X + 8;
+        double hikariFeetY = HIKARI_Y + 32;
+
+        double distance = Math.hypot(
+                playerCenterX - hikariCenterX,
+                playerFeetY - hikariFeetY
+        );
+
+        return distance < 28;
+    }
+
+
 }

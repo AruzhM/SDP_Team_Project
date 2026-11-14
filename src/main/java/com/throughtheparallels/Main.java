@@ -10,6 +10,11 @@ import javafx.stage.Stage;
 import java.util.EnumSet;
 import java.util.Set;
 
+
+import com.throughtheparallels.story.DialogueView;
+import javafx.geometry.Pos;
+
+
 public class Main extends Application {
 
     @Override
@@ -32,13 +37,30 @@ public class Main extends Application {
             CharacterProfile profile
     ) {
 
-        GameFacade game = new GameFacade();
 
+        GameFacade game = new GameFacade();
         game.startGame(profile);
 
+        // Create your teammate's dialogue interface
+        DialogueView dialogue = new DialogueView();
+
+        // Place the dialogue on top of the game canvas
         StackPane root = new StackPane(
-                game.getGameView()
+                game.getGameView(),
+                dialogue
         );
+
+        // Dialogue appears near the bottom of the window
+        StackPane.setAlignment(
+                dialogue,
+                Pos.BOTTOM_CENTER
+        );
+
+        StackPane.setMargin(
+                dialogue,
+                new javafx.geometry.Insets(0, 0, 25, 0)
+        );
+
 
         root.setStyle(
                 "-fx-background-color: #252238;"
@@ -59,13 +81,37 @@ public class Main extends Application {
                 return;
             }
 
-            if (key == KeyCode.E) {
 
-                // Crystal interaction has priority.
-                if (!game.activateCrystal()) {
+            if (key == KeyCode.E && !dialogue.isVisible()) {
+
+                if (game.canTalkToHikari()) {
+
+                    dialogue.showHikariChoice();
+
+                } else if (!game.activateCrystal()) {
+
                     game.interactWithDoor();
                 }
             }
+
+            // Escape closes the dialogue
+            if (key == KeyCode.ESCAPE &&
+                    dialogue.isVisible()) {
+
+                dialogue.hideDialogue();
+            }
+
+
+            dialogue.setOnOutcome(outcome -> {
+
+                System.out.println(
+                        "Hikari dialogue outcome: " + outcome
+                );
+
+                // Later: forward to the quest/save system.
+            });
+
+
 
         });
 
@@ -119,7 +165,17 @@ public class Main extends Application {
                 if (pressedKeys.contains(KeyCode.D))
                     dx++;
 
-                game.update(deltaTime, dx, dy);
+
+                if (dialogue.isVisible()) {
+
+                    // Stop movement while talking
+                    game.update(deltaTime, 0, 0);
+
+                } else {
+
+                    game.update(deltaTime, dx, dy);
+                }
+
             }
         };
 
@@ -134,7 +190,11 @@ public class Main extends Application {
         );
 
         gameLoop.start();
+
+        game.canTalkToHikari();
     }
+
+
 
     public static void main(String[] args) {
         launch(args);

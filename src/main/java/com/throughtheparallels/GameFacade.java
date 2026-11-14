@@ -125,6 +125,16 @@ public class GameFacade {
         return activated;
     }
 
+    public boolean canTalkToHikari() {
+
+        if (!gameStarted) {
+            return false;
+        }
+
+        return room.isPlayerNearHikari();
+    }
+
+
 
 
 }

@@ -1,8 +1,12 @@
 com\throughtheparallels\CharacterBuilder.class
+com\throughtheparallels\story\DialogueView.class
+com\throughtheparallels\story\DialoguePreviewLauncher.class
 com\throughtheparallels\story\CrystalEventFactory.class
+com\throughtheparallels\story\StoryInteractionHandler.class
 com\throughtheparallels\Launcher.class
 com\throughtheparallels\story\EventFactory.class
 com\throughtheparallels\Main$1.class
+com\throughtheparallels\story\DialoguePreview.class
 com\throughtheparallels\story\DialogueManager.class
 com\throughtheparallels\story\InteractionStrategy.class
 com\throughtheparallels\Main.class

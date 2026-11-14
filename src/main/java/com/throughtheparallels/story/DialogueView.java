@@ -1,4 +1,5 @@
 package com.throughtheparallels.story;
+import java.util.function.Consumer;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import java.util.Objects;
@@ -9,12 +10,20 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Region;
 
+
 public class DialogueView extends VBox {
 
     private final ImageView hikariPortrait;
     private final Label speakerLabel;
     private final Label dialogueLabel;
     private final HBox choices;
+
+
+    private Consumer<String> onOutcome = outcome -> {};
+    public void setOnOutcome(Consumer<String> callback) {
+        this.onOutcome = Objects.requireNonNull(callback);
+    }
+
 
 
 
@@ -117,13 +126,22 @@ public class DialogueView extends VBox {
         choices.setManaged(true);
     }
 
-    private void selectStrategy(InteractionStrategy strategy) {
+
+    private void selectStrategy(
+            InteractionStrategy strategy
+    ) {
         manager.setStrategy(strategy);
+
+        // Display the selected dialogue
         dialogueLabel.setText(manager.getDialogue());
 
         choices.setVisible(false);
         choices.setManaged(false);
+
+        // Notify the game of the selected outcome
+        onOutcome.accept(manager.getOutcome());
     }
+
 
     public void hideDialogue() {
         setVisible(false);
