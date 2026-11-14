@@ -49,9 +49,21 @@ public class Main extends Application {
         Set<KeyCode> pressedKeys =
                 EnumSet.noneOf(KeyCode.class);
 
-        scene.setOnKeyPressed(event ->
-                pressedKeys.add(event.getCode())
-        );
+
+        scene.setOnKeyPressed(event -> {
+
+            KeyCode key = event.getCode();
+
+            // Ignore repeated key events while held
+            if (!pressedKeys.add(key)) {
+                return;
+            }
+
+            if (key == KeyCode.E) {
+                game.interactWithDoor();
+            }
+        });
+
 
         scene.setOnKeyReleased(event ->
                 pressedKeys.remove(event.getCode())

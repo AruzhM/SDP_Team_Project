@@ -1,8 +1,12 @@
+com\throughtheparallels\RoomType.class
 com\throughtheparallels\CharacterBuilder.class
+com\throughtheparallels\story\GameEvent.class
 com\throughtheparallels\Player.class
 com\throughtheparallels\GameFacade.class
+com\throughtheparallels\story\CrystalEvent.class
 com\throughtheparallels\RoomRenderer.class
 com\throughtheparallels\Launcher.class
+com\throughtheparallels\story\DeskEvent.class
 com\throughtheparallels\Main$1.class
 com\throughtheparallels\CharacterCreator.class
 com\throughtheparallels\Main.class

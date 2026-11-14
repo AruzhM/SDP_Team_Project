@@ -200,4 +200,24 @@ public class Player {
         setHair(hairName);
     }
 
+    public void setPosition(double x, double y) {
+        this.x = x;
+        this.y = y;
+    }
+
+
+    public void setDirection(int direction) {
+
+        if (direction < 0 || direction > 3) {
+            throw new IllegalArgumentException(
+                    "Invalid direction"
+            );
+        }
+
+        this.direction = direction;
+        this.frame = 0;
+    }
+
+
+
 }
