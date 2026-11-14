@@ -4,7 +4,7 @@ public class TrustStrategy implements InteractionStrategy {
 
     @Override
     public String getDialogue() {
-        return "Hikari: I'm glad you trust me. Follow me.";
+        return "I'm glad you trust me. Follow me.";
     }
 
     @Override
