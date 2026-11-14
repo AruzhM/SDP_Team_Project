@@ -53,4 +53,16 @@ public class DialogueManagerTest {
                 manager.getOutcome()
         );
     }
+
+    @Test
+    void testNullStrategy() {
+        DialogueManager manager =
+                new DialogueManager(new TrustStrategy());
+
+        assertThrows(
+                NullPointerException.class,
+                () -> manager.setStrategy(null)
+        );
+    }
+
 }
