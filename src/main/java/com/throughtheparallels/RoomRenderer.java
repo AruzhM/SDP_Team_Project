@@ -283,14 +283,6 @@ public class RoomRenderer {
             );
         }
 
-        if (worldState == WorldState.NORMAL) {
-            gc.drawImage(
-                    crystal,
-                    crystalX,
-                    crystalY,
-                    16, 16
-            );
-        }
 
 
     }
@@ -550,6 +542,7 @@ public class RoomRenderer {
         }
 
         worldState = WorldState.TRANSFORMING;
+        crystalVisible = false;
         transitionTime = 0;
 
         player.setDirection(0);
@@ -571,10 +564,6 @@ public class RoomRenderer {
 
     public boolean isHikariVisible() {
         return currentRoom == RoomType.BEDROOM && worldState == WorldState.PARALLEL;
-    }
-
-    public boolean isPlayerNearHikari() {
-        return isHikariVisible() && Math.hypot(player.getX() - HIKARI_X, player.getY() - HIKARI_Y) < 26;
     }
 
     /** Loading restores a stable world; an interrupted transition can be activated again. */

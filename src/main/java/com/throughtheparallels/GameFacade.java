@@ -3,6 +3,8 @@ package com.throughtheparallels;
 import com.throughtheparallels.progression.*;
 import com.throughtheparallels.story.CrystalEventFactory;
 import com.throughtheparallels.story.DeskEventFactory;
+import com.throughtheparallels.story.TrustStrategy;
+import com.throughtheparallels.story.DoubtStrategy;
 import javafx.scene.canvas.Canvas;
 
 import java.io.IOException;
@@ -70,26 +72,6 @@ public class GameFacade {
         return gameStarted && !paused && !hasCrystal() && quests.isCompleted(QuestManager.READ_DESK)
                 && room.startCrystalTransition();
     }
-
-    public CharacterProfile getCurrentCharacter() {
-        return currentCharacter;
-    }
-
-    public boolean isGameStarted() {
-        return gameStarted;
-    }
-
-    public boolean isPlayerNearCrystal() {
-        return room.isPlayerNearCrystal();
-    }
-
-    public boolean isPlayerNearDoor() {
-        return room.isPlayerNearDoor();
-    }
-
-    //demo interactions
-    private boolean hasCrystal = false;
-
 
     public String interactWithCrystal() {
         if (paused) return "Game paused. Resume to continue.";
@@ -181,10 +163,11 @@ public class GameFacade {
     private String finishAction(String message) {
         try {
             saveGame();
-            return message;
+            storyMessage = message;
         } catch (IOException ex) {
-            return message + " Autosave failed: " + ex.getMessage() + ". Press F5 to retry.";
+            storyMessage = message + " Autosave failed: " + ex.getMessage() + ". Press F5 to retry.";
         }
+        return storyMessage;
     }
 
     public boolean isPaused() { return paused; }
@@ -198,8 +181,10 @@ public class GameFacade {
     public String getStoryMessage() { return storyMessage; }
     public String getEndingDescription() {
         return switch (ending) {
-            case FOLLOW_HIKARI -> "Ending — Beyond the Boundary: You follow Hikari into the hallway.";
-            case STAY_IN_ROOM -> "Ending — The Familiar Room: You choose to stay. You can keep exploring.";
+            case FOLLOW_HIKARI -> "Hikari: \"" + new TrustStrategy().getDialogue()
+                    + "\"\nEnding — Beyond the Boundary: You follow Hikari into the hallway.";
+            case STAY_IN_ROOM -> "Hikari: \"" + new DoubtStrategy().getDialogue()
+                    + "\"\nEnding — The Familiar Room: You choose to stay. You can keep exploring.";
             case UNDECIDED -> "Your story is not over yet.";
         };
     }

@@ -19,6 +19,13 @@ public class DialogueView extends VBox {
     private final HBox choices;
 
 
+    private Consumer<InteractionStrategy> onChoice = strategy -> {};
+
+    /** A typed choice lets gameplay update quests and saves without parsing display text. */
+    public void setOnChoice(Consumer<InteractionStrategy> callback) {
+        onChoice = Objects.requireNonNull(callback);
+    }
+
     private Consumer<String> onOutcome = outcome -> {};
     public void setOnOutcome(Consumer<String> callback) {
         this.onOutcome = Objects.requireNonNull(callback);
@@ -76,16 +83,16 @@ public class DialogueView extends VBox {
         hikariPortrait.setPreserveRatio(true);
         hikariPortrait.setSmooth(false);  
 
-        Button trustButton = new Button("Trust Hikari");
-        Button doubtButton = new Button("Doubt Hikari");
+        Button trustButton = new Button("1 — Follow Hikari");
+        Button doubtButton = new Button("2 — Stay in the room");
 
-        trustButton.setOnAction(event ->
-                selectStrategy(new TrustStrategy())
-        );
+        trustButton.setId("follow-hikari");
+        doubtButton.setId("stay-in-room");
+        trustButton.setFocusTraversable(false);
+        doubtButton.setFocusTraversable(false);
+        trustButton.setOnAction(event -> chooseTrust());
 
-        doubtButton.setOnAction(event ->
-                selectStrategy(new DoubtStrategy())
-        );
+        doubtButton.setOnAction(event -> chooseDoubt());
 
         choices = new HBox(10, trustButton, doubtButton);
 
@@ -109,7 +116,7 @@ public class DialogueView extends VBox {
 
         choices.setVisible(false);
         choices.setManaged(false);
-        setVisible(false);
+        hideDialogue();
     }
 
     public void showDialogue(String speaker, String text) {
@@ -118,6 +125,7 @@ public class DialogueView extends VBox {
         choices.setVisible(false);
         choices.setManaged(false);
         setVisible(true);
+        setManaged(true);
     }
 
     public void showHikariChoice() {
@@ -127,9 +135,14 @@ public class DialogueView extends VBox {
     }
 
 
+    public void chooseTrust() { selectStrategy(new TrustStrategy()); }
+
+    public void chooseDoubt() { selectStrategy(new DoubtStrategy()); }
+
     private void selectStrategy(
             InteractionStrategy strategy
     ) {
+        if (!isVisible() || !choices.isVisible() || isDisabled()) return;
         manager.setStrategy(strategy);
 
         // Display the selected dialogue
@@ -140,10 +153,12 @@ public class DialogueView extends VBox {
 
         // Notify the game of the selected outcome
         onOutcome.accept(manager.getOutcome());
+        onChoice.accept(strategy);
     }
 
 
     public void hideDialogue() {
         setVisible(false);
+        setManaged(false);
     }
 }

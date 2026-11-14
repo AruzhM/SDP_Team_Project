@@ -3,6 +3,8 @@ package com.throughtheparallels;
 import com.throughtheparallels.progression.GameEventPublisher;
 import com.throughtheparallels.progression.Quest;
 import com.throughtheparallels.progression.SaveManager;
+import com.throughtheparallels.story.DialogueView;
+import com.throughtheparallels.story.TrustStrategy;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -11,8 +13,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
-import javafx.scene.control.Button;
-import javafx.scene.layout.HBox;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.WindowEvent;
@@ -24,11 +24,6 @@ import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-
-import com.throughtheparallels.story.DialogueView;
-import javafx.geometry.Pos;
-
 
 public class Main extends Application {
     private final SaveManager saves = new SaveManager();
@@ -76,16 +71,8 @@ public class Main extends Application {
         journal.setMaxWidth(330);
         journal.setPadding(new Insets(18));
         journal.setStyle("-fx-text-fill: #e4d4f5; -fx-font-size: 14px; -fx-background-color: #332d47; -fx-background-radius: 12;");
-        Button follow = new Button("1 — Follow Hikari");
-        Button stay = new Button("2 — Stay in the room");
-        follow.setId("follow-hikari");
-        stay.setId("stay-in-room");
-        for (Button button : new Button[]{follow, stay}) {
-            button.setFocusTraversable(false);
-            button.setStyle("-fx-background-color: #8064ae; -fx-text-fill: white; -fx-padding: 10 18;");
-        }
-        HBox choices = new HBox(12, follow, stay);
-        choices.setAlignment(Pos.CENTER_LEFT);
+        DialogueView hikariDialogue = new DialogueView();
+        hikariDialogue.setId("hikari-dialogue");
         try {
             game.saveGame();
         } catch (IOException ex) {
@@ -101,8 +88,14 @@ public class Main extends Application {
             doorHint.setText(hint);
             doorHint.setVisible(!hint.isEmpty());
             doorHint.setManaged(!hint.isEmpty());
-            choices.setVisible(game.isChoicePending());
-            choices.setManaged(game.isChoicePending());
+            message.setVisible(!game.isChoicePending());
+            message.setManaged(!game.isChoicePending());
+            hikariDialogue.setDisable(game.isPaused());
+            if (game.isChoicePending()) {
+                if (!hikariDialogue.isVisible()) hikariDialogue.showHikariChoice();
+            } else {
+                hikariDialogue.hideDialogue();
+            }
 
         };
         game.getEventPublisher().subscribe(event -> {
@@ -115,53 +108,24 @@ public class Main extends Application {
             }
         });
 
-        GameFacade game = new GameFacade();
-        game.startGame(profile);
-
-        // Create your teammate's dialogue interface
-        DialogueView dialogue = new DialogueView();
-
-        // Place the dialogue on top of the game canvas
-        StackPane root = new StackPane(
-                game.getGameView(),
-                dialogue
-        );
-
-        // Dialogue appears near the bottom of the window
-        StackPane.setAlignment(
-                dialogue,
-                Pos.BOTTOM_CENTER
-        );
-
-        StackPane.setMargin(
-                dialogue,
-                new javafx.geometry.Insets(0, 0, 25, 0)
-        );
-
-
-        root.setStyle(
-                "-fx-background-color: #252238;"
-        );
-
-        follow.setOnAction(event -> {
-            message.setText(game.chooseEnding(SaveManager.Ending.FOLLOW_HIKARI));
-            refreshHud.run();
-        });
-        stay.setOnAction(event -> {
-            message.setText(game.chooseEnding(SaveManager.Ending.STAY_IN_ROOM));
+        hikariDialogue.setOnChoice(strategy -> {
+            if (game.isPaused() || !game.isChoicePending()) return;
+            SaveManager.Ending choice = strategy instanceof TrustStrategy
+                    ? SaveManager.Ending.FOLLOW_HIKARI : SaveManager.Ending.STAY_IN_ROOM;
+            message.setText(game.chooseEnding(choice));
             refreshHud.run();
         });
         StackPane roomPanel = new StackPane(game.getGameView());
         roomPanel.setMaxSize(528, 360);
-        VBox dialogue = new VBox(10, doorHint, eventNotice, message, choices, controls);
+        VBox dialogue = new VBox(10, doorHint, eventNotice, message, hikariDialogue, controls);
         dialogue.setMaxWidth(912);
         dialogue.setPadding(new Insets(18));
         dialogue.setStyle("-fx-background-color: #332d47; -fx-background-radius: 12;");
         StackPane root = new StackPane(roomPanel, journal, dialogue);
         StackPane.setAlignment(journal, Pos.TOP_LEFT);
         StackPane.setMargin(journal, new Insets(24, 0, 0, 24));
-        StackPane.setAlignment(roomPanel, Pos.CENTER_RIGHT);
-        StackPane.setMargin(roomPanel, new Insets(0, 24, 80, 0));
+        StackPane.setAlignment(roomPanel, Pos.TOP_RIGHT);
+        StackPane.setMargin(roomPanel, new Insets(24, 24, 0, 0));
         StackPane.setAlignment(dialogue, Pos.BOTTOM_CENTER);
         StackPane.setMargin(dialogue, new Insets(0, 24, 24, 24));
         // Overlay panels use their content height instead of filling the play area.
@@ -176,6 +140,7 @@ public class Main extends Application {
             pressedKeys.clear();
             game.setPaused(false);
             pauseMenu.setOpen(false);
+            refreshHud.run();
             root.requestFocus();
         };
         Runnable save = () -> {
@@ -234,65 +199,10 @@ public class Main extends Application {
                 if (!pressedKeys.contains(KeyCode.ESCAPE)) {
                     if (game.isPaused()) resume.run();
                     else {
-
-        Set<KeyCode> pressedKeys =
-                EnumSet.noneOf(KeyCode.class);
-
-
-        scene.setOnKeyPressed(event -> {
-
-            KeyCode key = event.getCode();
-
-            // Ignore repeated key events while held
-            if (!pressedKeys.add(key)) {
-                return;
-            }
-
-
-            if (key == KeyCode.E && !dialogue.isVisible()) {
-
-                if (game.canTalkToHikari()) {
-
-                    dialogue.showHikariChoice();
-
-                } else if (!game.activateCrystal()) {
-
-                    game.interactWithDoor();
-                }
-            }
-
-            // Escape closes the dialogue
-            if (key == KeyCode.ESCAPE &&
-                    dialogue.isVisible()) {
-
-                dialogue.hideDialogue();
-            }
-
-
-            dialogue.setOnOutcome(outcome -> {
-
-                System.out.println(
-                        "Hikari dialogue outcome: " + outcome
-                );
-
-                // Later: forward to the quest/save system.
-            });
-
-
-
-        });
-
-
-        scene.setOnKeyReleased(event ->
-                pressedKeys.remove(event.getCode())
-        );
-
-        stage.focusedProperty().addListener(
-                (obs, oldValue, focused) -> {
-                    if (!focused) {
                         pressedKeys.clear();
                         game.setPaused(true);
                         pauseMenu.setOpen(true);
+                        refreshHud.run();
                     }
                     // Keep ESC until release, preventing auto-repeat from toggling the menu.
                     pressedKeys.add(KeyCode.ESCAPE);
@@ -313,10 +223,10 @@ public class Main extends Application {
             switch (event.getCode()) {
                 case E -> message.setText(game.interact());
                 case DIGIT1, NUMPAD1 -> {
-                    if (game.isChoicePending()) message.setText(game.chooseEnding(SaveManager.Ending.FOLLOW_HIKARI));
+                    if (game.isChoicePending()) hikariDialogue.chooseTrust();
                 }
                 case DIGIT2, NUMPAD2 -> {
-                    if (game.isChoicePending()) message.setText(game.chooseEnding(SaveManager.Ending.STAY_IN_ROOM));
+                    if (game.isChoicePending()) hikariDialogue.chooseDoubt();
                 }
                 case F5 -> save.run();
                 case F9 -> reload.run();
@@ -347,37 +257,6 @@ public class Main extends Application {
                     message.setText(lastStoryMessage);
                 }
                 refreshHud.run();
-
-                deltaTime = Math.min(
-                        deltaTime, 0.05
-                );
-
-                double dx = 0;
-                double dy = 0;
-
-                if (pressedKeys.contains(KeyCode.W))
-                    dy--;
-
-                if (pressedKeys.contains(KeyCode.S))
-                    dy++;
-
-                if (pressedKeys.contains(KeyCode.A))
-                    dx--;
-
-                if (pressedKeys.contains(KeyCode.D))
-                    dx++;
-
-
-                if (dialogue.isVisible()) {
-
-                    // Stop movement while talking
-                    game.update(deltaTime, 0, 0);
-
-                } else {
-
-                    game.update(deltaTime, dx, dy);
-                }
-
             }
         };
         stage.setScene(scene);
@@ -409,14 +288,6 @@ public class Main extends Application {
         label.setWrapText(true);
         label.setMaxWidth(880);
         return label;
-
-        game.canTalkToHikari();
-    }
-
-
-
-    public static void main(String[] args) {
-        launch(args);
     }
 
     private void updateTitle(Stage stage, GameFacade game) {
