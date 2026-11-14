@@ -577,9 +577,20 @@ public class RoomRenderer {
                 && Math.abs(player.getX() - 72) < 24 && Math.abs(player.getY() - 48) < 20;
     }
 
+
     public boolean isHikariVisible() {
-        return currentRoom == RoomType.BEDROOM && worldState == WorldState.PARALLEL;
+
+        if (worldState != WorldState.PARALLEL) {
+            return false;
+        }
+
+        if (hikariInHallway) {
+            return currentRoom == RoomType.HALLWAY;
+        }
+
+        return currentRoom == RoomType.BEDROOM;
     }
+
 
     /** Loading restores a stable world; an interrupted transition can be activated again. */
     public void restoreProgress(boolean crystalCollected, RoomType savedRoom, double x, double y, int direction) {
@@ -590,23 +601,30 @@ public class RoomRenderer {
         player.stopSpecialAnimation();
         player.setPosition(x, y);
         player.setDirection(direction);
+        hikariInHallway = false;
         render();
     }
 
+
     public boolean isPlayerNearHikari() {
 
-        // Hikari only exists in the parallel room
-        if (currentRoom != RoomType.BEDROOM ||
-                worldState != WorldState.PARALLEL) {
+        if (!isHikariVisible()) {
             return false;
         }
 
-        // Compare the characters' feet positions
+        double hikariX = hikariInHallway
+                ? HIKARI_HALLWAY_X
+                : HIKARI_X;
+
+        double hikariY = hikariInHallway
+                ? HIKARI_HALLWAY_Y
+                : HIKARI_Y;
+
         double playerCenterX = player.getX() + 8;
         double playerFeetY = player.getY() + 32;
 
-        double hikariCenterX = HIKARI_X + 8;
-        double hikariFeetY = HIKARI_Y + 32;
+        double hikariCenterX = hikariX + 8;
+        double hikariFeetY = hikariY + 32;
 
         double distance = Math.hypot(
                 playerCenterX - hikariCenterX,
@@ -616,10 +634,11 @@ public class RoomRenderer {
         return distance < 28;
     }
 
+
     private boolean hikariInHallway = false;
 
     private static final int HIKARI_HALLWAY_X = 64;
-    private static final int HIKARI_HALLWAY_Y = 64;
+    private static final int HIKARI_HALLWAY_Y = 48;
 
 
     public void moveHikariToHallway() {
