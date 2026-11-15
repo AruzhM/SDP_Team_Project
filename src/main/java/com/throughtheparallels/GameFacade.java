@@ -122,7 +122,17 @@ public class GameFacade {
     public String chooseEnding(SaveManager.Ending choice) {
         if (paused) return "Game paused. Resume to continue.";
         Objects.requireNonNull(choice);
-        if (hasEnding()) return getEndingDescription();
+
+        if (ending == SaveManager.Ending.STAY_IN_ROOM) {
+            return "Hikari: \"Still not convinced? That's alright. "
+                    + "You don't have to trust me yet. "
+                    + "Ask me when you're ready.\"";
+        }
+
+        if (ending == SaveManager.Ending.FOLLOW_HIKARI) {
+            return "Hikari: \"There is something I want to show you.\"";
+        }
+
         if (!gameStarted || !isChoicePending() || choice == SaveManager.Ending.UNDECIDED) {
             return "Talk to Hikari before making your choice.";
         }
