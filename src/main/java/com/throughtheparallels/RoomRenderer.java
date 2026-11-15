@@ -24,8 +24,8 @@ public class RoomRenderer {
     private static final int EXIT_WIDTH = 32;
 
 
-    private static final int DUMMY_X = 96;
-    private static final int DUMMY_Y = 48;
+    private static final int DUMMY_X = 8;
+    private static final int DUMMY_Y = 62;
 
     private static final int DUMMY_WIDTH = 16;
     private static final int DUMMY_HEIGHT = 32;
@@ -53,8 +53,9 @@ public class RoomRenderer {
 
 
     private final Player player = new Player();
-    private static final double TARGET_X = 16;
-    private static final double TARGET_Y = 84;
+    // Aim at the painted bullseye, not the sprite's feet or its transparent margin.
+    private static final double TARGET_X = DUMMY_X + DUMMY_WIDTH / 2.0;
+    private static final double TARGET_Y = DUMMY_Y + 22;
     private int trainingHealth = PulseTraining.MAX_HEALTH;
     private double pulseTime;
     private double pulseX;
@@ -414,18 +415,7 @@ public class RoomRenderer {
             );
         }
 
-        // Training dummy
-        if (worldState == WorldState.PARALLEL
-                && hikariInHallway) {
-
-            gc.drawImage(
-                    trainingDummy,
-                    DUMMY_X,
-                    DUMMY_Y,
-                    DUMMY_WIDTH,
-                    DUMMY_HEIGHT
-            );
-        }
+        // The single interactive dummy is drawn by renderTraining().
 
 
 
@@ -486,17 +476,13 @@ public class RoomRenderer {
     private void renderTraining() {
         if (currentRoom != RoomType.HALLWAY || worldState != WorldState.PARALLEL) return;
         gc.save();
-        gc.setFill(Color.web("#b98954"));
-        gc.fillRect(TARGET_X - 1, TARGET_Y + 7, 2, 9);
-        gc.fillRect(TARGET_X - 8, TARGET_Y + 15, 16, 2);
-        gc.setStroke(trainingHealth > 0 ? Color.web("#e7b65c") : Color.web("#71d8ac"));
-        gc.setLineWidth(1);
-        gc.strokeOval(TARGET_X - 7, TARGET_Y - 7, 14, 14);
-        gc.strokeOval(TARGET_X - 3, TARGET_Y - 3, 6, 6);
+        gc.setGlobalAlpha(trainingHealth > 0 ? 1.0 : 0.45);
+        gc.drawImage(trainingDummy, DUMMY_X, DUMMY_Y, DUMMY_WIDTH, DUMMY_HEIGHT);
+        gc.setGlobalAlpha(1.0);
         gc.setFill(Color.web("#171222"));
-        gc.fillRect(TARGET_X - 10, TARGET_Y - 13, 20, 3);
+        gc.fillRect(TARGET_X - 10, DUMMY_Y - 4, 20, 3);
         gc.setFill(Color.web("#71d8ac"));
-        gc.fillRect(TARGET_X - 10, TARGET_Y - 13, 20.0 * trainingHealth / PulseTraining.MAX_HEALTH, 3);
+        gc.fillRect(TARGET_X - 10, DUMMY_Y - 4, 20.0 * trainingHealth / PulseTraining.MAX_HEALTH, 3);
         if (pulseTime > 0) {
             // Two travelling wave fronts, emitted only by an accepted shot.
             // Capture origin/direction on firing, so moving afterwards cannot steer the shot.
@@ -770,23 +756,8 @@ public class RoomRenderer {
 
 
     public boolean isPlayerNearDummy(double range) {
-
-        if (currentRoom != RoomType.HALLWAY) {
-            return false;
-        }
-
-        double playerCenterX = player.getX() + 8;
-        double playerFeetY = player.getY() + 32;
-
-        double dummyCenterX = DUMMY_X + DUMMY_WIDTH / 2.0;
-        double dummyFeetY = DUMMY_Y + DUMMY_HEIGHT;
-
-        double distance = Math.hypot(
-                playerCenterX - dummyCenterX,
-                playerFeetY - dummyFeetY
-        );
-
-        return distance <= range;
+        return currentRoom == RoomType.HALLWAY && worldState == WorldState.PARALLEL
+                && getTrainingDistance() <= range;
     }
 
 
