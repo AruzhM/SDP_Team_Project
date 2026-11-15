@@ -1,11 +1,13 @@
 com\throughtheparallels\CharacterBuilder.class
 com\throughtheparallels\story\DialogueView.class
+com\throughtheparallels\progression\SwiftnessAbility.class
 com\throughtheparallels\story\DialoguePreviewLauncher.class
 com\throughtheparallels\story\CrystalEventFactory.class
 com\throughtheparallels\StoryStage.class
 com\throughtheparallels\story\StoryInteractionHandler.class
 com\throughtheparallels\progression\GameEventListener.class
 com\throughtheparallels\progression\Quest.class
+com\throughtheparallels\progression\PulseTraining.class
 com\throughtheparallels\progression\SaveManager.class
 com\throughtheparallels\progression\CrystalAbility$Upgrade.class
 com\throughtheparallels\progression\GameEventPublisher$Event.class
@@ -23,6 +25,7 @@ com\throughtheparallels\CharacterProfile.class
 com\throughtheparallels\RoomType.class
 com\throughtheparallels\story\TrustStrategy.class
 com\throughtheparallels\PauseMenu.class
+com\throughtheparallels\progression\ReachAbility.class
 com\throughtheparallels\story\GameEvent.class
 com\throughtheparallels\story\TrustDialogue.class
 com\throughtheparallels\Player.class
@@ -32,6 +35,7 @@ com\throughtheparallels\story\DeskEventFactory.class
 com\throughtheparallels\progression\CrystalAbility.class
 com\throughtheparallels\progression\QuestManager.class
 com\throughtheparallels\GameFacade.class
+com\throughtheparallels\progression\PulseTraining$Result.class
 com\throughtheparallels\GameFacade$1.class
 com\throughtheparallels\progression\SaveManager$SaveData.class
 com\throughtheparallels\story\CrystalEvent.class
@@ -40,6 +44,8 @@ com\throughtheparallels\progression\AbilityDecorator.class
 com\throughtheparallels\story\DeskEvent.class
 com\throughtheparallels\WorldState.class
 com\throughtheparallels\progression\GameEventPublisher.class
+com\throughtheparallels\progression\PulseTraining$Status.class
+com\throughtheparallels\progression\PowerAbility.class
 com\throughtheparallels\story\DoubtStrategy.class
 com\throughtheparallels\CharacterCreator.class
 com\throughtheparallels\progression\GameEventPublisher$Type.class
