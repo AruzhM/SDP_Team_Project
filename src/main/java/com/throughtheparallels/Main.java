@@ -1,4 +1,5 @@
 package com.throughtheparallels;
+
 import com.throughtheparallels.progression.GameEventPublisher;
 import com.throughtheparallels.progression.Quest;
 import com.throughtheparallels.progression.SaveManager;
@@ -37,9 +38,11 @@ public class Main extends Application {
         CharacterCreator creator = new CharacterCreator(profile -> {
             if (saves.hasSave()) {
                 Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                        "Starting a new game replaces your saved progress. Continue?", ButtonType.OK, ButtonType.CANCEL);
+                        "Starting a new game replaces your saved progress. Continue?", ButtonType.OK,
+                        ButtonType.CANCEL);
                 confirm.initOwner(stage);
-                if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
+                if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK)
+                    return;
             }
             GameFacade game = new GameFacade(saves);
             game.startGame(profile);
@@ -65,10 +68,11 @@ public class Main extends Application {
         doorHint.setId("door-hint");
         doorHint.setStyle("-fx-text-fill: #f4d59a; -fx-font-size: 14px;");
         Label controls = label(13);
-        controls.setText("WASD: move  |  E: interact  |  Q: pulse  |  R: reset target  |  F5/F9: save/load  |  ESC: pause");
+        controls.setText(
+                "WASD: move  |  E: interact  |  Q: shoot waves  |  R: reset target  |  F5/F9: save/load  |  ESC: pause");
         Label abilityStats = label(12);
         abilityStats.setId("ability-stats");
-        Button pulseButton = new Button("Q · Pulse");
+        Button pulseButton = new Button("Q · Shoot waves");
         pulseButton.setId("pulse-button");
         Button resetTargetButton = new Button("R · Reset target");
         resetTargetButton.setId("reset-target-button");
@@ -92,7 +96,8 @@ public class Main extends Application {
         journal.setPrefWidth(330);
         journal.setMaxWidth(330);
         journal.setPadding(new Insets(18));
-        journal.setStyle("-fx-text-fill: #e4d4f5; -fx-font-size: 14px; -fx-background-color: #332d47; -fx-background-radius: 12;");
+        journal.setStyle(
+                "-fx-text-fill: #e4d4f5; -fx-font-size: 14px; -fx-background-color: #332d47; -fx-background-radius: 12;");
         DialogueView hikariDialogue = new DialogueView();
         hikariDialogue.setId("hikari-dialogue");
         try {
@@ -105,13 +110,14 @@ public class Main extends Application {
             var ability = game.getAbility();
             String trainingHint = !game.hasCrystal() ? "Unlock: desk -> crystal -> Hikari."
                     : game.getCurrentRoom() != RoomType.HALLWAY ? "Enter the hallway to practice."
-                    : String.format(Locale.ROOT, "Target %d/60 HP · distance %.1f · recharge %.2f s",
-                            game.getTrainingHealth(), game.getTrainingDistance(), game.getPulseCooldown());
+                            : String.format(Locale.ROOT, "Target %d/60 HP · distance %.1f · recharge %.2f s",
+                                    game.getTrainingHealth(), game.getTrainingDistance(), game.getPulseCooldown());
             abilityStats.setText(String.format(Locale.ROOT,
                     "CRYSTAL TRAINING · %s\nDamage %d · radius %.0f px · cooldown %.2f s\n%s",
                     ability.getName(), ability.getDamage(), ability.getRange(), ability.getCooldown(), trainingHint));
             boolean trainingAvailable = game.canUsePulse() && !hikariDialogue.isTrustDialogueActive();
-            // Story dialogues need the lower half of the window; restore the card afterwards.
+            // Story dialogues need the lower half of the window; restore the card
+            // afterwards.
             boolean showTraining = !game.isChoicePending() && !hikariDialogue.isTrustDialogueActive();
             abilityPanel.setVisible(showTraining);
             abilityPanel.setManaged(showTraining);
@@ -136,11 +142,15 @@ public class Main extends Application {
                 }
             }
 
-
-
         };
-        pulseButton.setOnAction(event -> { message.setText(game.usePulse()); refreshHud.run(); });
-        resetTargetButton.setOnAction(event -> { message.setText(game.resetTrainingTarget()); refreshHud.run(); });
+        pulseButton.setOnAction(event -> {
+            message.setText(game.usePulse());
+            refreshHud.run();
+        });
+        resetTargetButton.setOnAction(event -> {
+            message.setText(game.resetTrainingTarget());
+            refreshHud.run();
+        });
         baseline.setOnAction(event -> {
             game.setTrainingBaseline(baseline.isSelected());
             refreshHud.run();
@@ -148,7 +158,8 @@ public class Main extends Application {
         game.getEventPublisher().subscribe(event -> {
             if (event.type() == GameEventPublisher.Type.QUEST_COMPLETED) {
                 String description = game.getQuestManager().getQuests().stream()
-                        .filter(q -> q.getId().equals(event.subject())).map(Quest::getDescription).findFirst().orElse(event.subject());
+                        .filter(q -> q.getId().equals(event.subject())).map(Quest::getDescription).findFirst()
+                        .orElse(event.subject());
                 eventNotice.setText("Quest completed: " + description);
             } else if (event.type() == GameEventPublisher.Type.GAME_LOADED) {
                 eventNotice.setText("Saved progress restored.");
@@ -156,9 +167,11 @@ public class Main extends Application {
         });
 
         hikariDialogue.setOnChoice(strategy -> {
-            if (game.isPaused() || !game.isChoicePending()) return;
+            if (game.isPaused() || !game.isChoicePending())
+                return;
             SaveManager.Ending choice = strategy instanceof TrustStrategy
-                    ? SaveManager.Ending.FOLLOW_HIKARI : SaveManager.Ending.STAY_IN_ROOM;
+                    ? SaveManager.Ending.FOLLOW_HIKARI
+                    : SaveManager.Ending.STAY_IN_ROOM;
             message.setText(game.chooseEnding(choice));
             hikariDialogue.hideDialogue();
             refreshHud.run();
@@ -225,7 +238,8 @@ public class Main extends Application {
                     ButtonType.OK, ButtonType.CANCEL);
             confirm.setHeaderText("Restart game?");
             confirm.initOwner(stage);
-            if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
+            if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK)
+                return;
             pressedKeys.clear();
             game.startGame(game.getCurrentCharacter());
             game.setPaused(true);
@@ -236,19 +250,22 @@ public class Main extends Application {
                 game.saveGame();
                 resume.run();
             } catch (IOException ex) {
-                pauseMenu.showFeedback("Story restarted, but saving failed: " + ex.getMessage() + ". Use Save to retry.");
+                pauseMenu.showFeedback(
+                        "Story restarted, but saving failed: " + ex.getMessage() + ". Use Save to retry.");
             }
         };
         pauseMenu.configure(resume, save, reload, restart, () -> {
             // Use the same save/error/cancel path as closing the window normally.
             WindowEvent close = new WindowEvent(stage, WindowEvent.WINDOW_CLOSE_REQUEST);
             stage.fireEvent(close);
-            if (!close.isConsumed()) stage.close();
+            if (!close.isConsumed())
+                stage.close();
         });
         scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.ESCAPE) {
                 if (!pressedKeys.contains(KeyCode.ESCAPE)) {
-                    if (game.isPaused()) resume.run();
+                    if (game.isPaused())
+                        resume.run();
                     else {
                         pressedKeys.clear();
                         game.setPaused(true);
@@ -268,27 +285,26 @@ public class Main extends Application {
         });
         scene.addEventFilter(KeyEvent.KEY_RELEASED, event -> pressedKeys.remove(event.getCode()));
         scene.setOnKeyPressed(event -> {
-            if (game.isPaused()) return;
+            if (game.isPaused())
+                return;
 
             // Ignore OS key repeats: each press triggers an action only once.
-            if (!pressedKeys.add(event.getCode())) return;
+            if (!pressedKeys.add(event.getCode()))
+                return;
             switch (event.getCode()) {
-
                 case E -> {
                     if (hikariDialogue.isTrustDialogueActive()) {
                         break;
                     }
 
                     // Close an ordinary dialogue with E
-                    if (hikariDialogue.isVisible()
-                            && !game.isChoicePending()) {
+                    if (hikariDialogue.isVisible() && !game.isChoicePending()) {
                         hikariDialogue.hideDialogue();
                         break;
                     }
 
                     // Talk to Hikari again after Doubt
-                    if (game.getEnding()
-                            == SaveManager.Ending.STAY_IN_ROOM
+                    if (game.getEnding() == SaveManager.Ending.STAY_IN_ROOM
                             && game.getCurrentRoom() == RoomType.BEDROOM
                             && game.isPlayerNearHikari()) {
 
@@ -299,8 +315,7 @@ public class Main extends Application {
                     }
 
                     // Hikari in the hallway
-                    if (game.getEnding()
-                            == SaveManager.Ending.FOLLOW_HIKARI
+                    if (game.getEnding() == SaveManager.Ending.FOLLOW_HIKARI
                             && game.getCurrentRoom() == RoomType.HALLWAY
                             && game.isPlayerNearHikari()) {
 
@@ -310,35 +325,41 @@ public class Main extends Application {
                     }
 
                     message.setText(game.interact());
-                }
 
+                }
                 case ENTER -> {
                     if (hikariDialogue.isTrustDialogueActive()) {
                         hikariDialogue.advanceTrustDialogue();
                     }
                 }
                 case DIGIT1, NUMPAD1 -> {
-                    if (game.isChoicePending()) hikariDialogue.chooseTrust();
+                    if (game.isChoicePending())
+                        hikariDialogue.chooseTrust();
                 }
                 case DIGIT2, NUMPAD2 -> {
-                    if (game.isChoicePending()) hikariDialogue.chooseDoubt();
+                    if (game.isChoicePending())
+                        hikariDialogue.chooseDoubt();
                 }
                 case F5 -> save.run();
                 case F9 -> reload.run();
                 case Q -> {
-                    if (!hikariDialogue.isTrustDialogueActive()) message.setText(game.usePulse());
+                    if (!hikariDialogue.isTrustDialogueActive())
+                        message.setText(game.usePulse());
                 }
                 case R -> {
-                    if (!hikariDialogue.isTrustDialogueActive()) message.setText(game.resetTrainingTarget());
+                    if (!hikariDialogue.isTrustDialogueActive())
+                        message.setText(game.resetTrainingTarget());
                 }
-                default -> { }
+                default -> {
+                }
             }
             refreshHud.run();
             event.consume();
         });
         scene.setOnKeyReleased(event -> pressedKeys.remove(event.getCode()));
         stage.focusedProperty().addListener((obs, oldValue, focused) -> {
-            if (!focused) pressedKeys.clear();
+            if (!focused)
+                pressedKeys.clear();
         });
 
         AnimationTimer gameLoop = new AnimationTimer() {
@@ -347,7 +368,10 @@ public class Main extends Application {
 
             @Override
             public void handle(long now) {
-                if (lastTime == 0) { lastTime = now; return; }
+                if (lastTime == 0) {
+                    lastTime = now;
+                    return;
+                }
                 double deltaTime = Math.min((now - lastTime) / 1_000_000_000.0, 0.05);
                 lastTime = now;
                 double dx = (pressedKeys.contains(KeyCode.D) ? 1 : 0) - (pressedKeys.contains(KeyCode.A) ? 1 : 0);
@@ -402,5 +426,7 @@ public class Main extends Application {
         alert.showAndWait();
     }
 
-    public static void main(String[] args) { launch(args); }
+    public static void main(String[] args) {
+        launch(args);
+    }
 }

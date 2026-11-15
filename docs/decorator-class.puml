@@ -32,7 +32,7 @@ class GameFacade {
 class PulseTraining {
   -health: int
   -remainingCooldown: double
-  +fire(ability, distance): Result
+  +fire(ability, distance, targetInWavePath): Result
   +update(deltaTime): void
 }
 class QuestManager

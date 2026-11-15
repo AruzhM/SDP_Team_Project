@@ -122,17 +122,7 @@ public class GameFacade {
     public String chooseEnding(SaveManager.Ending choice) {
         if (paused) return "Game paused. Resume to continue.";
         Objects.requireNonNull(choice);
-
-        if (ending == SaveManager.Ending.STAY_IN_ROOM) {
-            return "Hikari: \"Still not convinced? That's alright. "
-                    + "You don't have to trust me yet. "
-                    + "Ask me when you're ready.\"";
-        }
-
-        if (ending == SaveManager.Ending.FOLLOW_HIKARI) {
-            return "Hikari: \"There is something I want to show you.\"";
-        }
-
+        if (hasEnding()) return getEndingDescription();
         if (!gameStarted || !isChoicePending() || choice == SaveManager.Ending.UNDECIDED) {
             return "Talk to Hikari before making your choice.";
         }
@@ -275,13 +265,14 @@ public class GameFacade {
         if (isWorldTransitioning() || isChoicePending()) return "Finish the current interaction first.";
         if (!hasCrystal()) return "Collect the crystal to unlock the pulse.";
         if (room.getCurrentRoom() != RoomType.HALLWAY) return "Enter the hallway to practice with the target.";
-        PulseTraining.Result result = training.fire(ability, room.getTrainingDistance());
+        PulseTraining.Result result = training.fire(ability, room.getTrainingDistance(), room.isTrainingTargetInWavePath());
         room.setTrainingHealth(training.getHealth());
         if (result.fired()) room.showPulse(ability.getRange());
         return switch (result.status()) {
             case HIT -> "Pulse hit: " + result.damage() + " damage. Target: " + result.remainingHealth() + "/60 HP.";
             case DESTROYED -> "Practice target cleared! Press R to reset it.";
             case OUT_OF_RANGE -> "Target out of range. Move closer; REACH extends the pulse radius.";
+            case MISSED -> "Wave missed. Face the target and line up with its centre before pressing Q.";
             case COOLDOWN -> String.format(Locale.ROOT, "Pulse recharging: %.2f s.", training.getRemainingCooldown());
             case ALREADY_DESTROYED -> "Target already cleared. Press R to reset it.";
         };

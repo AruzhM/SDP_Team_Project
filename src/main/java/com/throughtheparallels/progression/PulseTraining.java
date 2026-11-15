@@ -5,10 +5,11 @@ import java.util.Objects;
 /** GUI-independent consumer of Ability. It knows nothing about concrete decorators. */
 public final class PulseTraining {
     public static final int MAX_HEALTH = 60;
-    public enum Status { HIT, DESTROYED, OUT_OF_RANGE, COOLDOWN, ALREADY_DESTROYED }
+    public enum Status { HIT, DESTROYED, OUT_OF_RANGE, MISSED, COOLDOWN, ALREADY_DESTROYED }
     public record Result(Status status, int damage, int remainingHealth) {
         public boolean fired() {
-            return status == Status.HIT || status == Status.DESTROYED || status == Status.OUT_OF_RANGE;
+            return status == Status.HIT || status == Status.DESTROYED
+                    || status == Status.OUT_OF_RANGE || status == Status.MISSED;
         }
     }
 
@@ -16,6 +17,10 @@ public final class PulseTraining {
     private double remainingCooldown;
 
     public Result fire(Ability ability, double distance) {
+        return fire(ability, distance, true);
+    }
+
+    public Result fire(Ability ability, double distance, boolean targetInWavePath) {
         Objects.requireNonNull(ability, "Ability");
         requireNonNegativeFinite(distance, "Distance");
         if (health == 0) return new Result(Status.ALREADY_DESTROYED, 0, health);
@@ -30,6 +35,7 @@ public final class PulseTraining {
         requireNonNegativeFinite(cooldown, "Cooldown");
         remainingCooldown = cooldown;
         if (distance > range) return new Result(Status.OUT_OF_RANGE, 0, health);
+        if (!targetInWavePath) return new Result(Status.MISSED, 0, health);
         int appliedDamage = Math.min(health, damage);
         health -= appliedDamage;
         return new Result(health == 0 ? Status.DESTROYED : Status.HIT, appliedDamage, health);
