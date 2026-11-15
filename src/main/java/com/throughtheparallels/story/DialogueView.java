@@ -258,4 +258,18 @@ public class DialogueView extends VBox {
         setVisible(false);
         setManaged(false);
     }
+
+    private String playerName = "Hikaru";
+
+    public void setPlayerName(String name) {
+        this.playerName = name;
+    }
+
+    private String getSpeakerName(String speaker) {
+        if ("Player".equals(speaker)) {
+            return playerName;
+        }
+        return speaker;
+    }
+
 }

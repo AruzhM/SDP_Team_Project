@@ -28,7 +28,23 @@ public class TrustDialogue {
             ),
             new DialogueLine(
                     "Hikari",
-                    "Come with me. There's something I need to show you."
+                    "You brought the crystal with you, didn't you?"
+            ),
+            new DialogueLine(
+                    "Player",
+                    "Yeah. But I still don't know what it does."
+            ),
+            new DialogueLine(
+                    "Hikari",
+                    "It doesn't just open paths between worlds. It can protect you, too."
+            ),
+            new DialogueLine(
+                    "Hikari",
+                    "See that training dummy? Try focusing your energy on it."
+            ),
+            new DialogueLine(
+                    "Hikari",
+                    "Press Q to release a crystal pulse. Make sure you're close enough!"
             )
     );
 

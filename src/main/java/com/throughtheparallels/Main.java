@@ -134,9 +134,8 @@ public class Main extends Application {
                 if (!hikariDialogue.isVisible()) {
                     hikariDialogue.showHikariChoice();
                 }
-            } else if (!hikariDialogue.isTrustDialogueActive()) {
-                hikariDialogue.hideDialogue();
             }
+
 
 
         };
@@ -161,6 +160,7 @@ public class Main extends Application {
             SaveManager.Ending choice = strategy instanceof TrustStrategy
                     ? SaveManager.Ending.FOLLOW_HIKARI : SaveManager.Ending.STAY_IN_ROOM;
             message.setText(game.chooseEnding(choice));
+            hikariDialogue.hideDialogue();
             refreshHud.run();
         });
         StackPane roomPanel = new StackPane(game.getGameView());
@@ -273,27 +273,45 @@ public class Main extends Application {
             // Ignore OS key repeats: each press triggers an action only once.
             if (!pressedKeys.add(event.getCode())) return;
             switch (event.getCode()) {
+
                 case E -> {
                     if (hikariDialogue.isTrustDialogueActive()) {
                         break;
                     }
 
-                    boolean hallwayHikari =
-                            game.getEnding() == SaveManager.Ending.FOLLOW_HIKARI
-                                    && game.getCurrentRoom() == RoomType.HALLWAY
-                                    && game.isPlayerNearHikari();
-                    if (hallwayHikari) {
-                        String interaction = game.interact();
-
-                        if (interaction.equals(game.getEndingDescription())) {
-                            hikariDialogue.showHallwayDialogue();
-                        } else {
-                            message.setText(interaction);
-                        }
-                    } else {
-                        message.setText(game.interact());
+                    // Close an ordinary dialogue with E
+                    if (hikariDialogue.isVisible()
+                            && !game.isChoicePending()) {
+                        hikariDialogue.hideDialogue();
+                        break;
                     }
+
+                    // Talk to Hikari again after Doubt
+                    if (game.getEnding()
+                            == SaveManager.Ending.STAY_IN_ROOM
+                            && game.getCurrentRoom() == RoomType.BEDROOM
+                            && game.isPlayerNearHikari()) {
+
+                        String text = game.interactWithHikari();
+                        hikariDialogue.showDialogue("Hikari",
+                                text.replaceFirst("^Hikari: ", ""));
+                        break;
+                    }
+
+                    // Hikari in the hallway
+                    if (game.getEnding()
+                            == SaveManager.Ending.FOLLOW_HIKARI
+                            && game.getCurrentRoom() == RoomType.HALLWAY
+                            && game.isPlayerNearHikari()) {
+
+                        game.interactWithHikari();
+                        hikariDialogue.showHallwayDialogue();
+                        break;
+                    }
+
+                    message.setText(game.interact());
                 }
+
                 case ENTER -> {
                     if (hikariDialogue.isTrustDialogueActive()) {
                         hikariDialogue.advanceTrustDialogue();
