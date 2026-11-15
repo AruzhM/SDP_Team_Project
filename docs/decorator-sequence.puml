@@ -1,0 +1,39 @@
+@startuml
+title Decorated pulse hits the hallway practice target
+actor Player
+participant Main
+participant GameFacade
+participant PulseTraining
+participant "Ability chain" as Chain
+participant RoomRenderer
+
+note over GameFacade, Chain
+  Quest rewards already rebuilt the chain:
+  Reach(Swiftness(Power(BasicAbility)))
+end note
+Player -> Main : Q or Pulse button
+Main -> GameFacade : usePulse()
+GameFacade -> GameFacade : check game / pause / crystal / room / choice
+GameFacade -> RoomRenderer : getTrainingDistance()
+RoomRenderer --> GameFacade : distance in logical pixels
+GameFacade -> PulseTraining : fire(ability, distance)
+PulseTraining -> PulseTraining : check health and cooldown
+PulseTraining -> Chain : getDamage(), getRange(), getCooldown()
+note right of Chain
+  Each decorator delegates to wrapped.
+  Power adds 10 damage.
+  Reach adds 16 pixels.
+  Swiftness multiplies cooldown by 0.65.
+end note
+Chain --> PulseTraining : 20 damage / 52 radius / 0.52 seconds
+alt distance <= radius
+  PulseTraining -> PulseTraining : health -= applied damage
+  PulseTraining --> GameFacade : HIT or DESTROYED
+else distance > radius
+  PulseTraining --> GameFacade : OUT_OF_RANGE (cooldown consumed)
+end
+GameFacade -> RoomRenderer : setTrainingHealth(health), showPulse(range)
+GameFacade --> Main : feedback text
+Main -> Main : refresh stats, HP and buttons
+Main --> Player : target, ring and result visible
+@enduml

@@ -9,6 +9,7 @@ import javafx.scene.canvas.Canvas;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Locale;
 
 /** Connects quests, saves and pause controls to the team's existing room implementation. */
 public class GameFacade {
@@ -16,6 +17,9 @@ public class GameFacade {
     private final SaveManager saves;
     private final GameEventPublisher events = new GameEventPublisher();
     private final QuestManager quests = new QuestManager(events);
+    private Ability ability = new BasicAbility();
+    private boolean trainingBaseline;
+    private final PulseTraining training = new PulseTraining();
     private CharacterProfile currentCharacter;
     private boolean gameStarted;
     private boolean paused;
@@ -27,6 +31,11 @@ public class GameFacade {
     public GameFacade(SaveManager saves) {
         this.saves = Objects.requireNonNull(saves);
         room = new RoomRenderer();
+        events.subscribe(event -> {
+            if (event.type() == GameEventPublisher.Type.QUEST_COMPLETED) {
+                rebuildAbility();
+            }
+        });
     }
 
     public void startGame(CharacterProfile profile) {
@@ -34,6 +43,7 @@ public class GameFacade {
         room.setCharacter(profile);
         currentCharacter = profile;
         quests.reset();
+        resetAbilities();
         ending = SaveManager.Ending.UNDECIDED;
         storyMessage = "Explore the bedroom. Press E near the writing desk.";
         room.restoreProgress(false, RoomType.BEDROOM, 80, 80, 0);
@@ -44,6 +54,7 @@ public class GameFacade {
     public void update(double deltaTime, double dx, double dy) {
         if (!gameStarted || paused) return;
         if (!Double.isFinite(deltaTime) || deltaTime < 0) throw new IllegalArgumentException("Invalid frame duration");
+        if (!isChoicePending() && !isWorldTransitioning()) training.update(deltaTime);
         WorldState before = room.getWorldState();
         room.update(deltaTime, isChoicePending() ? 0 : dx, isChoicePending() ? 0 : dy);
         // Observe the team's transition; no separate pickup animation or timer lives here.
@@ -157,6 +168,7 @@ public class GameFacade {
         SaveManager.SaveData data = saves.load();
         room.setCharacter(data.profile());
         quests.restore(data.quests());
+        resetAbilities();
         currentCharacter = data.profile();
         ending = data.ending();
         room.restoreProgress(hasCrystal(), data.room(), data.x(), data.y(), data.direction());
@@ -216,6 +228,61 @@ public class GameFacade {
     public boolean hasCrystal() { return quests.isCompleted(QuestManager.FIND_CRYSTAL); }
     public QuestManager getQuestManager() { return quests; }
     public GameEventPublisher getEventPublisher() { return events; }
+
+    private void resetAbilities() {
+        trainingBaseline = false;
+        rebuildAbility();
+        training.resetSession();
+        room.setTrainingHealth(training.getHealth());
+    }
+
+    public Ability getAbility() { return ability; }
+    public int getTrainingHealth() { return training.getHealth(); }
+    public double getPulseCooldown() { return training.getRemainingCooldown(); }
+    public double getTrainingDistance() { return room.getTrainingDistance(); }
+    public boolean isTrainingBaseline() { return trainingBaseline; }
+
+    private void rebuildAbility() {
+        ability = trainingBaseline ? new BasicAbility() : CrystalAbility.fromQuests(quests);
+    }
+
+    /** Temporary A/B comparison for training; never changes earned quest progress. */
+    public void setTrainingBaseline(boolean baseline) {
+        if (!canUsePulse()) throw new IllegalStateException("Training is not available now");
+        trainingBaseline = baseline;
+        rebuildAbility();
+    }
+
+    /** UI and keyboard share the same guards and business logic. */
+    public boolean canUsePulse() {
+        return gameStarted && !paused && hasCrystal() && !isWorldTransitioning()
+                && !isChoicePending() && room.getCurrentRoom() == RoomType.HALLWAY;
+    }
+
+    public String usePulse() {
+        if (!gameStarted) return "Start a game first.";
+        if (paused) return "Game paused. Resume to continue.";
+        if (isWorldTransitioning() || isChoicePending()) return "Finish the current interaction first.";
+        if (!hasCrystal()) return "Collect the crystal to unlock the pulse.";
+        if (room.getCurrentRoom() != RoomType.HALLWAY) return "Enter the hallway to practice with the target.";
+        PulseTraining.Result result = training.fire(ability, room.getTrainingDistance());
+        room.setTrainingHealth(training.getHealth());
+        if (result.fired()) room.showPulse(ability.getRange());
+        return switch (result.status()) {
+            case HIT -> "Pulse hit: " + result.damage() + " damage. Target: " + result.remainingHealth() + "/60 HP.";
+            case DESTROYED -> "Practice target cleared! Press R to reset it.";
+            case OUT_OF_RANGE -> "Target out of range. Move closer; REACH extends the pulse radius.";
+            case COOLDOWN -> String.format(Locale.ROOT, "Pulse recharging: %.2f s.", training.getRemainingCooldown());
+            case ALREADY_DESTROYED -> "Target already cleared. Press R to reset it.";
+        };
+    }
+
+    public String resetTrainingTarget() {
+        if (!canUsePulse()) return "Enter the hallway with the crystal and finish any dialogue to practice.";
+        training.resetTarget();
+        room.setTrainingHealth(training.getHealth());
+        return "Practice target reset: 60 HP. Your unlocked upgrades are unchanged.";
+    }
 
     public void moveHikariToHallway() {
         room.moveHikariToHallway();

@@ -4,6 +4,8 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import java.util.Objects;
+import com.throughtheparallels.progression.PulseTraining;
+import javafx.scene.paint.Color;
 
 public class RoomRenderer {
 
@@ -42,6 +44,13 @@ public class RoomRenderer {
 
 
     private final Player player = new Player();
+    private static final double TARGET_X = 152;
+    private static final double TARGET_Y = 84;
+    private int trainingHealth = PulseTraining.MAX_HEALTH;
+    private double pulseTime;
+    private double pulseX;
+    private double pulseY;
+    private double pulseRange;
 
 
     public RoomRenderer() {
@@ -388,6 +397,7 @@ public class RoomRenderer {
         }
 
         // Draw the player
+        renderTraining();
         player.render(gc);
 
         // Draw the crystal effect over the player
@@ -399,6 +409,40 @@ public class RoomRenderer {
         return canvas;
     }
 
+    /** Coordinates use the same logical pixels as Ability.getRange(). */
+    public double getTrainingDistance() {
+        return Math.hypot(player.getX() + 8 - TARGET_X, player.getY() + 24 - TARGET_Y);
+    }
+
+    public void setTrainingHealth(int health) { trainingHealth = health; }
+
+    public void showPulse(double range) {
+        pulseX = player.getX() + 8;
+        pulseY = player.getY() + 24;
+        pulseRange = range;
+        pulseTime = 0.25;
+        render();
+    }
+
+    private void renderTraining() {
+        if (currentRoom != RoomType.HALLWAY || worldState != WorldState.PARALLEL) return;
+        gc.save();
+        gc.setStroke(trainingHealth > 0 ? Color.web("#e7b65c") : Color.web("#71d8ac"));
+        gc.setLineWidth(1);
+        gc.strokeOval(TARGET_X - 7, TARGET_Y - 7, 14, 14);
+        gc.strokeOval(TARGET_X - 3, TARGET_Y - 3, 6, 6);
+        gc.setFill(Color.web("#171222"));
+        gc.fillRect(TARGET_X - 10, TARGET_Y + 10, 20, 3);
+        gc.setFill(Color.web("#71d8ac"));
+        gc.fillRect(TARGET_X - 10, TARGET_Y + 10, 20.0 * trainingHealth / PulseTraining.MAX_HEALTH, 3);
+        if (pulseTime > 0) {
+            gc.setGlobalAlpha(pulseTime / 0.25);
+            gc.setStroke(Color.web("#bca6ff"));
+            gc.strokeOval(pulseX - pulseRange, pulseY - pulseRange, pulseRange * 2, pulseRange * 2);
+        }
+        gc.restore();
+    }
+
 
 
 
@@ -407,7 +451,7 @@ public class RoomRenderer {
             double dx,
             double dy
     ) {
-
+        pulseTime = Math.max(0, pulseTime - deltaTime);
         if (worldState == WorldState.TRANSFORMING) {
 
             transitionTime += deltaTime;
@@ -505,6 +549,7 @@ public class RoomRenderer {
     public void changeRoom(RoomType newRoom) {
 
         currentRoom = newRoom;
+        pulseTime = 0;
 
         if (newRoom == RoomType.HALLWAY) {
 
@@ -599,6 +644,7 @@ public class RoomRenderer {
         crystalVisible = !crystalCollected;
         transitionTime = 0;
         player.stopSpecialAnimation();
+        pulseTime = 0;
         player.setPosition(x, y);
         player.setDirection(direction);
         hikariInHallway = false;
@@ -645,7 +691,4 @@ public class RoomRenderer {
         hikariInHallway = true;
         render();
     }
-
-
-
 }

@@ -1,0 +1,63 @@
+@startuml
+title Crystal pulse: Decorator participants and integration
+top to bottom direction
+skinparam classAttributeIconSize 0
+interface Ability {
+  +getName(): String
+  +getDamage(): int
+  +getRange(): double
+  +getCooldown(): double
+}
+class BasicAbility
+abstract class AbilityDecorator {
+  #wrapped: Ability
+}
+class PowerAbility {
+  +getDamage(): int
+}
+class ReachAbility {
+  +getRange(): double
+}
+class SwiftnessAbility {
+  +getCooldown(): double
+}
+class CrystalAbility {
+  {static} +fromQuests(quests): Ability
+}
+class GameFacade {
+  -ability: Ability
+  +usePulse(): String
+  +setTrainingBaseline(baseline): void
+}
+class PulseTraining {
+  -health: int
+  -remainingCooldown: double
+  +fire(ability, distance): Result
+  +update(deltaTime): void
+}
+class QuestManager
+class Main
+class RoomRenderer
+Ability <|.. BasicAbility
+Ability <|.. AbilityDecorator
+AbilityDecorator o--> "1" Ability : wraps / delegates
+AbilityDecorator <|-- PowerAbility
+AbilityDecorator <|-- ReachAbility
+AbilityDecorator <|-- SwiftnessAbility
+AbilityDecorator <|-- CrystalAbility
+CrystalAbility ..> QuestManager : reads earned rewards
+CrystalAbility ..> PowerAbility : creates
+CrystalAbility ..> ReachAbility : creates
+CrystalAbility ..> SwiftnessAbility : creates
+GameFacade --> Ability : current chain
+GameFacade *--> PulseTraining
+GameFacade --> QuestManager
+GameFacade --> RoomRenderer
+Main --> GameFacade : Q / buttons / HUD
+PulseTraining ..> Ability : reads polymorphically
+note right of CrystalAbility
+  Existing API retained for compatibility.
+  fromQuests starts from BasicAbility;
+  it builds a fresh chain after quest completion/load.
+end note
+@enduml

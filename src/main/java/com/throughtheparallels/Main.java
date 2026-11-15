@@ -12,15 +12,19 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.WindowEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class Main extends Application {
@@ -61,7 +65,27 @@ public class Main extends Application {
         doorHint.setId("door-hint");
         doorHint.setStyle("-fx-text-fill: #f4d59a; -fx-font-size: 14px;");
         Label controls = label(13);
-        controls.setText("WASD: move  |  E: interact  |  F5: save  |  F9: load  |  ESC: pause");
+        controls.setText("WASD: move  |  E: interact  |  Q: pulse  |  R: reset target  |  F5/F9: save/load  |  ESC: pause");
+        Label abilityStats = label(12);
+        abilityStats.setId("ability-stats");
+        Button pulseButton = new Button("Q · Pulse");
+        pulseButton.setId("pulse-button");
+        Button resetTargetButton = new Button("R · Reset target");
+        resetTargetButton.setId("reset-target-button");
+        CheckBox baseline = new CheckBox("Basic pulse (compare)");
+        baseline.setId("baseline-toggle");
+        baseline.setStyle("-fx-text-fill: #e4d4f5;");
+        baseline.setFocusTraversable(false);
+        pulseButton.setFocusTraversable(false);
+        resetTargetButton.setFocusTraversable(false);
+        HBox trainingControls = new HBox(10, pulseButton, resetTargetButton, baseline);
+        trainingControls.setAlignment(Pos.CENTER_LEFT);
+        VBox abilityPanel = new VBox(8, abilityStats, trainingControls);
+        abilityPanel.setId("ability-panel");
+        abilityPanel.setPadding(new Insets(12));
+        abilityPanel.setMaxWidth(528);
+        abilityPanel.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+        abilityPanel.setStyle("-fx-background-color: #332d47; -fx-background-radius: 12;");
         message.setText(game.getStoryMessage());
         journal.setId("quest-journal");
         journal.setMinWidth(330);
@@ -78,6 +102,23 @@ public class Main extends Application {
         }
 
         Runnable refreshHud = () -> {
+            var ability = game.getAbility();
+            String trainingHint = !game.hasCrystal() ? "Unlock: desk -> crystal -> Hikari."
+                    : game.getCurrentRoom() != RoomType.HALLWAY ? "Enter the hallway to practice."
+                    : String.format(Locale.ROOT, "Target %d/60 HP · distance %.1f · recharge %.2f s",
+                            game.getTrainingHealth(), game.getTrainingDistance(), game.getPulseCooldown());
+            abilityStats.setText(String.format(Locale.ROOT,
+                    "CRYSTAL TRAINING · %s\nDamage %d · radius %.0f px · cooldown %.2f s\n%s",
+                    ability.getName(), ability.getDamage(), ability.getRange(), ability.getCooldown(), trainingHint));
+            boolean trainingAvailable = game.canUsePulse() && !hikariDialogue.isTrustDialogueActive();
+            // Story dialogues need the lower half of the window; restore the card afterwards.
+            boolean showTraining = !game.isChoicePending() && !hikariDialogue.isTrustDialogueActive();
+            abilityPanel.setVisible(showTraining);
+            abilityPanel.setManaged(showTraining);
+            pulseButton.setDisable(!trainingAvailable || game.getPulseCooldown() > 0 || game.getTrainingHealth() == 0);
+            resetTargetButton.setDisable(!trainingAvailable);
+            baseline.setDisable(!trainingAvailable);
+            baseline.setSelected(game.isTrainingBaseline());
             journal.setText("QUESTS\n" + game.getQuestManager().getQuests().stream()
                     .map(q -> (q.isCompleted() ? "✓ " : "✗ ") + q.getDescription()
                             + "\nObjective: " + q.getObjective())
@@ -86,8 +127,8 @@ public class Main extends Application {
             doorHint.setText(hint);
             doorHint.setVisible(!hint.isEmpty());
             doorHint.setManaged(!hint.isEmpty());
-            message.setVisible(!game.isChoicePending());
-            message.setManaged(!game.isChoicePending());
+            message.setVisible(showTraining);
+            message.setManaged(showTraining);
             hikariDialogue.setDisable(game.isPaused());
             if (game.isChoicePending()) {
                 if (!hikariDialogue.isVisible()) {
@@ -99,6 +140,12 @@ public class Main extends Application {
 
 
         };
+        pulseButton.setOnAction(event -> { message.setText(game.usePulse()); refreshHud.run(); });
+        resetTargetButton.setOnAction(event -> { message.setText(game.resetTrainingTarget()); refreshHud.run(); });
+        baseline.setOnAction(event -> {
+            game.setTrainingBaseline(baseline.isSelected());
+            refreshHud.run();
+        });
         game.getEventPublisher().subscribe(event -> {
             if (event.type() == GameEventPublisher.Type.QUEST_COMPLETED) {
                 String description = game.getQuestManager().getQuests().stream()
@@ -119,10 +166,13 @@ public class Main extends Application {
         StackPane roomPanel = new StackPane(game.getGameView());
         roomPanel.setMaxSize(528, 360);
         VBox dialogue = new VBox(10, doorHint, eventNotice, message, hikariDialogue, controls);
+        dialogue.setId("story-panel");
         dialogue.setMaxWidth(912);
         dialogue.setPadding(new Insets(18));
         dialogue.setStyle("-fx-background-color: #332d47; -fx-background-radius: 12;");
-        StackPane root = new StackPane(roomPanel, journal, dialogue);
+        StackPane root = new StackPane(roomPanel, journal, abilityPanel, dialogue);
+        StackPane.setAlignment(abilityPanel, Pos.TOP_RIGHT);
+        StackPane.setMargin(abilityPanel, new Insets(396, 24, 0, 0));
         StackPane.setAlignment(journal, Pos.TOP_LEFT);
         StackPane.setMargin(journal, new Insets(24, 0, 0, 24));
         StackPane.setAlignment(roomPanel, Pos.TOP_RIGHT);
@@ -257,6 +307,12 @@ public class Main extends Application {
                 }
                 case F5 -> save.run();
                 case F9 -> reload.run();
+                case Q -> {
+                    if (!hikariDialogue.isTrustDialogueActive()) message.setText(game.usePulse());
+                }
+                case R -> {
+                    if (!hikariDialogue.isTrustDialogueActive()) message.setText(game.resetTrainingTarget());
+                }
                 default -> { }
             }
             refreshHud.run();
