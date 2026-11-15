@@ -99,6 +99,11 @@ public class Main extends Application {
         journal.setStyle(
                 "-fx-text-fill: #e4d4f5; -fx-font-size: 14px; -fx-background-color: #332d47; -fx-background-radius: 12;");
         DialogueView hikariDialogue = new DialogueView();
+
+        hikariDialogue.setPlayerName(
+                game.getCurrentCharacter().getName()
+        );
+
         hikariDialogue.setId("hikari-dialogue");
         try {
             game.saveGame();

@@ -24,6 +24,14 @@ public class RoomRenderer {
     private static final int EXIT_WIDTH = 32;
 
 
+    private static final int DUMMY_X = 96;
+    private static final int DUMMY_Y = 48;
+
+    private static final int DUMMY_WIDTH = 16;
+    private static final int DUMMY_HEIGHT = 32;
+
+
+
     private WorldState worldState = WorldState.NORMAL;
 
     private double transitionTime = 0;
@@ -144,6 +152,27 @@ public class RoomRenderer {
                     hallwayTileset.getException()
             );
         }
+
+
+        var dummyUrl = getClass().getResource(
+                "/assets/objects/training_dummy.png"
+        );
+
+        if (dummyUrl == null) {
+            throw new IllegalStateException(
+                    "Missing training_dummy.png"
+            );
+        }
+
+        trainingDummy = new Image(dummyUrl.toExternalForm());
+
+        if (trainingDummy.isError()) {
+            throw new IllegalStateException(
+                    "Could not load training dummy",
+                    trainingDummy.getException()
+            );
+        }
+
 
 
     }
@@ -382,6 +411,19 @@ public class RoomRenderer {
                     HIKARI_HALLWAY_X,
                     HIKARI_HALLWAY_Y,
                     16, 32
+            );
+        }
+
+        // Training dummy
+        if (worldState == WorldState.PARALLEL
+                && hikariInHallway) {
+
+            gc.drawImage(
+                    trainingDummy,
+                    DUMMY_X,
+                    DUMMY_Y,
+                    DUMMY_WIDTH,
+                    DUMMY_HEIGHT
             );
         }
 
@@ -724,6 +766,28 @@ public class RoomRenderer {
         render();
     }
 
+    private final Image trainingDummy;
+
+
+    public boolean isPlayerNearDummy(double range) {
+
+        if (currentRoom != RoomType.HALLWAY) {
+            return false;
+        }
+
+        double playerCenterX = player.getX() + 8;
+        double playerFeetY = player.getY() + 32;
+
+        double dummyCenterX = DUMMY_X + DUMMY_WIDTH / 2.0;
+        double dummyFeetY = DUMMY_Y + DUMMY_HEIGHT;
+
+        double distance = Math.hypot(
+                playerCenterX - dummyCenterX,
+                playerFeetY - dummyFeetY
+        );
+
+        return distance <= range;
+    }
 
 
 }

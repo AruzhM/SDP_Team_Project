@@ -8,10 +8,10 @@ public class TrustDialogue {
     private final List<DialogueLine> lines = List.of(
             new DialogueLine(
                     "Hikari",
-                    "I'm glad you trust me. There's something you need to know about that crystal."
+                    "I'm glad you trust me. I'm Hikari, by the way! There's something you need to know about that crystal."
             ),
             new DialogueLine(
-                    "Player",
+                    "You",
                     "What is it? Why did everything change when I touched it?"
             ),
             new DialogueLine(
@@ -19,19 +19,19 @@ public class TrustDialogue {
                     "It's not an ordinary crystal. It connects places that were never meant to meet."
             ),
             new DialogueLine(
-                    "Player",
+                    "You",
                     "Then why did it appear in my room?"
             ),
             new DialogueLine(
                     "Hikari",
-                    "I don't know everything yet. But I think it chose you."
+                    "I don't know everything yet. But I think it chose you. Come with me, {playerName}"
             ),
             new DialogueLine(
                     "Hikari",
                     "You brought the crystal with you, didn't you?"
             ),
             new DialogueLine(
-                    "Player",
+                    "You",
                     "Yeah. But I still don't know what it does."
             ),
             new DialogueLine(

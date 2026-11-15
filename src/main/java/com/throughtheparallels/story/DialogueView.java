@@ -87,8 +87,8 @@ public class DialogueView extends VBox {
         hikariPortrait.setPreserveRatio(true);
         hikariPortrait.setSmooth(false);  
 
-        Button trustButton = new Button("1 — Follow Hikari");
-        Button doubtButton = new Button("2 — Stay in the room");
+        Button trustButton = new Button("Listen to Hikari");
+        Button doubtButton = new Button("Stay in the room");
 
         trustButton.setId("follow-hikari");
         doubtButton.setId("stay-in-room");
@@ -147,8 +147,8 @@ public class DialogueView extends VBox {
             TrustDialogue.DialogueLine line =
                     trustDialogue.getCurrentLine();
 
-            speakerLabel.setText(line.speaker());
-            dialogueLabel.setText(line.text());
+            speakerLabel.setText(getSpeakerName(line.speaker()));
+            dialogueLabel.setText(formatDialogue(line.text()));
             if (!trustDialogue.hasNext()) {
                 continueButton.setText("Finish");
             }
@@ -175,7 +175,7 @@ public class DialogueView extends VBox {
         trustDialogueActive = false;
         continueButton.setVisible(false);
         continueButton.setManaged(false);
-        speakerLabel.setText(speaker);
+        speakerLabel.setText(getSpeakerName(speaker));
         dialogueLabel.setText(text);
         choices.setVisible(false);
         choices.setManaged(false);
@@ -240,8 +240,8 @@ public class DialogueView extends VBox {
         TrustDialogue.DialogueLine line =
                 trustDialogue.getCurrentLine();
 
-        speakerLabel.setText(line.speaker());
-        dialogueLabel.setText(line.text());
+        speakerLabel.setText(getSpeakerName(line.speaker()));
+        dialogueLabel.setText(formatDialogue(line.text()));
 
         continueButton.setText("Continue →");
         continueButton.setVisible(true);
@@ -270,6 +270,10 @@ public class DialogueView extends VBox {
             return playerName;
         }
         return speaker;
+    }
+
+    private String formatDialogue(String text) {
+        return text.replace("{playerName}", playerName);
     }
 
 }
