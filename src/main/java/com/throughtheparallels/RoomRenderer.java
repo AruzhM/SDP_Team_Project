@@ -6,6 +6,7 @@ import javafx.scene.image.Image;
 import java.util.Objects;
 import com.throughtheparallels.progression.PulseTraining;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.ArcType;
 
 public class RoomRenderer {
 
@@ -52,13 +53,16 @@ public class RoomRenderer {
 
 
     private final Player player = new Player();
-    private static final double TARGET_X = 152;
+    private static final double TARGET_X = 16;
     private static final double TARGET_Y = 84;
     private int trainingHealth = PulseTraining.MAX_HEALTH;
     private double pulseTime;
     private double pulseX;
     private double pulseY;
     private double pulseRange;
+    private int pulseDirection;
+    private static final double WAVE_DURATION = 0.42;
+    private static final double WAVE_HALF_WIDTH = 10;
 
 
     public RoomRenderer() {
@@ -456,31 +460,59 @@ public class RoomRenderer {
         return Math.hypot(player.getX() + 8 - TARGET_X, player.getY() + 24 - TARGET_Y);
     }
 
+    public boolean isTrainingTargetInWavePath() {
+        double dx = TARGET_X - (player.getX() + 8);
+        double dy = TARGET_Y - (player.getY() + 24);
+        return switch (player.getDirection()) {
+            case 0 -> dy >= 0 && Math.abs(dx) <= WAVE_HALF_WIDTH;
+            case 1 -> dx <= 0 && Math.abs(dy) <= WAVE_HALF_WIDTH;
+            case 2 -> dx >= 0 && Math.abs(dy) <= WAVE_HALF_WIDTH;
+            case 3 -> dy <= 0 && Math.abs(dx) <= WAVE_HALF_WIDTH;
+            default -> false;
+        };
+    }
+
     public void setTrainingHealth(int health) { trainingHealth = health; }
 
     public void showPulse(double range) {
         pulseX = player.getX() + 8;
         pulseY = player.getY() + 24;
         pulseRange = range;
-        pulseTime = 0.25;
+        pulseDirection = player.getDirection();
+        pulseTime = WAVE_DURATION;
         render();
     }
 
     private void renderTraining() {
         if (currentRoom != RoomType.HALLWAY || worldState != WorldState.PARALLEL) return;
         gc.save();
+        gc.setFill(Color.web("#b98954"));
+        gc.fillRect(TARGET_X - 1, TARGET_Y + 7, 2, 9);
+        gc.fillRect(TARGET_X - 8, TARGET_Y + 15, 16, 2);
         gc.setStroke(trainingHealth > 0 ? Color.web("#e7b65c") : Color.web("#71d8ac"));
         gc.setLineWidth(1);
         gc.strokeOval(TARGET_X - 7, TARGET_Y - 7, 14, 14);
         gc.strokeOval(TARGET_X - 3, TARGET_Y - 3, 6, 6);
         gc.setFill(Color.web("#171222"));
-        gc.fillRect(TARGET_X - 10, TARGET_Y + 10, 20, 3);
+        gc.fillRect(TARGET_X - 10, TARGET_Y - 13, 20, 3);
         gc.setFill(Color.web("#71d8ac"));
-        gc.fillRect(TARGET_X - 10, TARGET_Y + 10, 20.0 * trainingHealth / PulseTraining.MAX_HEALTH, 3);
+        gc.fillRect(TARGET_X - 10, TARGET_Y - 13, 20.0 * trainingHealth / PulseTraining.MAX_HEALTH, 3);
         if (pulseTime > 0) {
-            gc.setGlobalAlpha(pulseTime / 0.25);
-            gc.setStroke(Color.web("#bca6ff"));
-            gc.strokeOval(pulseX - pulseRange, pulseY - pulseRange, pulseRange * 2, pulseRange * 2);
+            // Two travelling wave fronts, emitted only by an accepted shot.
+            // Capture origin/direction on firing, so moving afterwards cannot steer the shot.
+            gc.translate(pulseX, pulseY);
+            gc.rotate(switch (pulseDirection) { case 0 -> 90; case 1 -> 180; case 2 -> 0; default -> 270; });
+            double elapsed = WAVE_DURATION - pulseTime;
+            for (int i = 0; i < 2; i++) {
+                double progress = (elapsed - i * 0.07) / (WAVE_DURATION - 0.07);
+                if (progress < 0 || progress > 1) continue;
+                double travel = progress * pulseRange;
+                gc.setGlobalAlpha(1 - progress * 0.75);
+                gc.setStroke(i == 0 ? Color.web("#c8b7ff") : Color.web("#7be3ed"));
+                gc.setLineWidth(1.8);
+                gc.strokeArc(travel - WAVE_HALF_WIDTH * 2, -WAVE_HALF_WIDTH,
+                        WAVE_HALF_WIDTH * 2, WAVE_HALF_WIDTH * 2, -65, 130, ArcType.OPEN);
+            }
         }
         gc.restore();
     }

@@ -14,9 +14,9 @@ end note
 Player -> Main : Q or Pulse button
 Main -> GameFacade : usePulse()
 GameFacade -> GameFacade : check game / pause / crystal / room / choice
-GameFacade -> RoomRenderer : getTrainingDistance()
-RoomRenderer --> GameFacade : distance in logical pixels
-GameFacade -> PulseTraining : fire(ability, distance)
+GameFacade -> RoomRenderer : getTrainingDistance(), isTrainingTargetInWavePath()
+RoomRenderer --> GameFacade : distance and direction alignment
+GameFacade -> PulseTraining : fire(ability, distance, targetInWavePath)
 PulseTraining -> PulseTraining : check health and cooldown
 PulseTraining -> Chain : getDamage(), getRange(), getCooldown()
 note right of Chain
@@ -26,14 +26,14 @@ note right of Chain
   Swiftness multiplies cooldown by 0.65.
 end note
 Chain --> PulseTraining : 20 damage / 52 radius / 0.52 seconds
-alt distance <= radius
+alt within range and target in wave path
   PulseTraining -> PulseTraining : health -= applied damage
   PulseTraining --> GameFacade : HIT or DESTROYED
-else distance > radius
-  PulseTraining --> GameFacade : OUT_OF_RANGE (cooldown consumed)
+else out of range or facing away
+  PulseTraining --> GameFacade : OUT_OF_RANGE or MISSED (cooldown consumed)
 end
 GameFacade -> RoomRenderer : setTrainingHealth(health), showPulse(range)
 GameFacade --> Main : feedback text
 Main -> Main : refresh stats, HP and buttons
-Main --> Player : target, ring and result visible
+Main --> Player : left-wall target, travelling waves and result visible
 @enduml
